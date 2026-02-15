@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "serverscan",
+	"version": "1.0.0",
+	"name": "Server Finder++",
+	"description": "Scans many IP addresses to find online servers",
+	"authors": [
+		"echen0719"
+	],
+	"contact": {
+		"homepage": "https://echen0719.github.io/",
+		"sources": "https://github.com/echen0719/minecraft-modding"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/serverscan/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"serverscan.Serverscan"
+		],
+		"client": [
+			"serverscan.ServerscanClient"
+		]
+	},
+	"mixins": [
+		"serverscan.mixins.json",
+		{
+			"config": "serverscan.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
