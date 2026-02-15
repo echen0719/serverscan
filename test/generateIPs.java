@@ -1,13 +1,11 @@
-import java.util.Random;
-
-public class portScanner {
+public class generateIPs {
     // https://pingproxies.com/blog/generate-a-random-ip-address
     private static boolean isRestrictedIP(long ip) {
         int o1 = (int)(ip >>> 24) & 0xFF;
         int o2 = (int)(ip >>> 16) & 0xFF;
         int o3 = (int)(ip >>> 8) & 0xFF;
 
-        // switch statements are around 25% faster than if statements
+        // switch statements are around 2-4x faster than if statements
         switch (o1) {
             case 0: return true; // 0.x.x.x
             case 10: return true; // 10.x.x.x
@@ -35,6 +33,8 @@ public class portScanner {
     }
 
     private static String intToIP(long ip) {
+        if (isRestrictedIP(ip)) return null;
+
         // https://mkyong.com/java/java-and-0xff-example/
         int o1= (int)(ip >> 24) & 0xFF;
         int o2 = (int)(ip >> 16) & 0xFF;
@@ -46,8 +46,7 @@ public class portScanner {
 
     public static void main(String[] args) {
         for (long ip = 0; ip < 0xFFFFFFFFL; ip++) {
-            if (isRestrictedIP(ip)) continue;
-            // else System.out.println(intToIP(ip));
+            // System.out.println(intToIP(ip)); // <-- this slows it down so MUCH
         }
     }
 }
