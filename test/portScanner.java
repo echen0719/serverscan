@@ -7,21 +7,31 @@ public class portScanner {
         int o2 = (int)(ip >>> 16) & 0xFF;
         int o3 = (int)(ip >>> 8) & 0xFF;
 
-        if (o1 == 0) return true; // 0.x.x.x
-        if (o1 == 10) return true; // 10.x.x.x
-        if (o1 == 127) return true; // 127.x.x.x
-        if (o1 == 100 && (o2 >= 64 && o2 < 128)) return true; // 100.64-127.x.x
-        if (o1 == 169 && o2 == 254) return true; // 169.254.x.x
-        if (o1 == 172 && (o2 >= 16 && o2 < 32)) return true; // 172.16-31.x.x
-        if (o1 == 192 && o2 == 0 && o3 == 0) return true; // 192.0.0.x
-        if (o1 == 192 && o2 == 0 && o3 == 2) return true; // 192.0.2.x
-        if (o1 == 192 && o2 == 168) return true; // 192.168.x.x
-        if (o1 == 198 && (o2 == 18 || o2 == 19)) return true; // 198.18-19.100.x
-        if (o1 == 198 && o2 == 51 && o3 == 100) return true; // 198.51.100.x
-        if (o1 == 203 && o2 == 0 && o3 == 113) return true; // 203.0.113.x
-        if (o1 >= 224) return true; // 224-255.x.x.x
+        // switch statements are around 25% faster than if statements
+        switch (o1) {
+            case 0: return true; // 0.x.x.x
+            case 10: return true; // 10.x.x.x
+            case 127: return true; // 127.x.x.x
+            case 100: return (o2 >= 64 && o2 < 128); // 100.64-127.x.x
+            case 169: return o2 == 254; // 169.254.x.x
+            case 172: return (o2 >= 16 && o2 < 32); // 172.16-31.x.x
+            case 192:
+                switch(o2) {
+                    case 0: return (o3 == 0 || o3 == 2); // 192.0.0.x and 192.0.2.x
+                    case 168: return true;  // 192.168.x.x
+                    default: return false;
+                }
+            case 198:
+                switch(o2) {
+                    case 18: return true;  // 198.18.x.x
+                    case 19: return true;  // 198.19.x.x
+                    case 51: return o3 == 100;  // 198.51.100.x
+                    default: return false;
+                }
+            case 203: return (o2 == 0 && o3 == 113);  // 203.0.113.x
 
-        return false;
+            default: return o1 >= 224;  // 224-255.x.x.x
+        }
     }
 
     private static String intToIP(long ip) {
