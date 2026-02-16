@@ -20,14 +20,14 @@ public class scanScreen extends Screen {
 
         Button backButton = Button.builder(Component.literal("Back"), button -> {
             this.minecraft.setScreen(parent);
-        }).bounds(this.width/2 - 50, this.height - 40, 100, 20).build();
+        }).bounds((this.width - 100)/2, this.height - 40, 100, 20).build();
         this.addRenderableWidget(backButton);
     }
 
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredString(this.font, Component.literal("Server Scanner"), this.width/2, this.height/2, 0xFFFFFF);
+        // bro, this single line below caused me so much confusion, it turns out colors are in 0xFFFFFFFF format, not 0xFFFFFF
+        context.drawCenteredString(this.font, Component.literal("Ha! You cliked a button"), this.width/2, this.height/2, 0xFFFFFFFF);
     }
 }

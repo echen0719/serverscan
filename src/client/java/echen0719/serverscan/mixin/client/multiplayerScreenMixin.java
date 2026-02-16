@@ -20,13 +20,15 @@ public class multiplayerScreenMixin extends Screen {
 
 	@Inject(at = @At("TAIL"), method = "init")
 	private void init(CallbackInfo info) {
-		int x = this.width - 100;
-		int y = this.height - 30;
+		int buttonWidth = 100;
+		int buttonHeight = 20;
+		int x = 5;
+		int y = 5;
 
 		// https://github.com/orgs/FabricMC/discussions/1795
 		Button openButton = Button.builder(Component.literal("Scan Servers"), (button) -> {
             this.minecraft.setScreen(new scanScreen(this));
-        }).bounds(x, y, 100, 20).build();
+        }).bounds(x, y, buttonWidth, buttonHeight).build();
 		this.addRenderableWidget(openButton);
 	}
 }

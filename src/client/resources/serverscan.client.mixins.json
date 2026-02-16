@@ -1,9 +1,9 @@
 {
 	"required": true,
-	"package": "serverscan.mixin.client",
+	"package": "echen0719.serverscan.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"ExampleClientMixin"
+		"multiplayerScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
