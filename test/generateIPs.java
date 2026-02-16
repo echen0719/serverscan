@@ -32,7 +32,7 @@ public class generateIPs {
         }
     }
 
-    private static String intToIP(long ip) {
+    public static String intToIP(long ip) {
         if (isRestrictedIP(ip)) return null;
 
         // https://mkyong.com/java/java-and-0xff-example/
