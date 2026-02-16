@@ -1,4 +1,4 @@
-package serverscan;
+package echen0719.serverscan;
 
 import net.fabricmc.api.ClientModInitializer;
 

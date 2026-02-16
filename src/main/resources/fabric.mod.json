@@ -16,10 +16,10 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"serverscan.Serverscan"
+			"echen0719.serverscan.Serverscan"
 		],
 		"client": [
-			"serverscan.ServerscanClient"
+			"echen0719.serverscan.ServerscanClient"
 		]
 	},
 	"mixins": [
