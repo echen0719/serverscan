@@ -13,6 +13,7 @@ public class scanScreen extends Screen {
     private EditBox ipBox;
     private EditBox portBox;
     private EditBox rateBox;
+    private EditBox outFileBox;
 
     private int formStartX, formStartY;
     private int termX, termY, termWidth, termHeight;
@@ -47,25 +48,32 @@ public class scanScreen extends Screen {
         int ipBoxWidth = (int)(widthForInputs * 0.5f);
         int portBoxWidth = (int)(widthForInputs * 0.25f);
         int rateBoxWidth = (int)(widthForInputs * 0.25f);
-
-        ipBox = new EditBox(this.font, formStartX, formStartY, ipBoxWidth, inputHeight, Component.literal(""));
-        ipBox.setHint(Component.literal("0.0.0.0-255.255.255.255"));
-        this.addRenderableWidget(ipBox);
+        int outFileBoxWidth = (int)(widthForInputs * 0.15f);
 
         int portBoxX = formStartX + ipBoxWidth + padding;
-        portBox = new EditBox(this.font, portBoxX, formStartY, portBoxWidth, inputHeight, Component.literal(""));
-        portBox.setHint(Component.literal("25565"));
-        this.addRenderableWidget(portBox);
-
         int rateBoxX = portBoxX + portBoxWidth + padding;
-        rateBox = new EditBox(this.font, rateBoxX, formStartY, rateBoxWidth, inputHeight, Component.literal(""));
-        rateBox.setHint(Component.literal("100000"));
-        this.addRenderableWidget(rateBox);
 
         termX = formStartX;
         termY = formStartY + inputHeight + padding / 2;
         termWidth = (rateBoxX + rateBoxWidth) - formStartX;
         termHeight = this.height - termY - pxH(0.15f);
+
+        ipBox = new EditBox(this.font, formStartX, formStartY, ipBoxWidth, inputHeight, Component.literal(""));
+        ipBox.setHint(Component.literal("0.0.0.0-255.255.255.255"));
+        this.addRenderableWidget(ipBox);
+
+        portBox = new EditBox(this.font, portBoxX, formStartY, portBoxWidth, inputHeight, Component.literal(""));
+        portBox.setHint(Component.literal("25565"));
+        this.addRenderableWidget(portBox);
+
+        rateBox = new EditBox(this.font, rateBoxX, formStartY, rateBoxWidth, inputHeight, Component.literal(""));
+        rateBox.setHint(Component.literal("100000"));
+        this.addRenderableWidget(rateBox);
+
+        int outFileBoxY = termY + termHeight + padding / 2; // don't want the line to be too long
+        outFileBox = new EditBox(this.font, formStartX, outFileBoxY, outFileBoxWidth, inputHeight, Component.literal(""));
+        outFileBox.setHint(Component.literal("output.txt"));
+        this.addRenderableWidget(outFileBox);
     }
 
     public void createTerm(GuiGraphics context) { // context works only within render()
@@ -90,7 +98,7 @@ public class scanScreen extends Screen {
         // buttonX = rateBox.getX() + rateBox.getWidth() - 100 --> align right with padding
         Button backButton = Button.builder(Component.literal("Back"), button -> {
             this.minecraft.setScreen(parent);
-        }).bounds(rateBox.getX() + rateBox.getWidth() - 100, this.height - 30, 100, 20).build();
+        }).bounds(rateBox.getX() + rateBox.getWidth() - 100, termY + termHeight + 10, 100, 20).build();
         this.addRenderableWidget(backButton);
     }
 
