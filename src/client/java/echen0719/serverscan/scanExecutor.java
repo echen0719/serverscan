@@ -13,11 +13,11 @@ public class scanExecutor {
     private static final ExecutorService executor = Executors.newCachedThreadPool();
 
     // https://www.baeldung.com/java-executor-service-tutorial
-    private static void runScan(String ipRanges, String portRanges, String rate, ScanCallback callback) {
+    private static void runScan(String ipRanges, String portRanges, String rate, String output, ScanCallback callback) {
         try {
             // calls nativeUtil with game directory
             File binary = nativeUtil.getBinary(FabricLoader.getInstance().getGameDirectory());
-            File outputFile = Files.createTempFile("serversFound", ".txt").toFile(); // output
+            File outputFile = new File(output); // output
 
             // ./masscan x.x.x.x-y.y.y.y -p zzzzz --rate dddddd -oL "serversFound.txt"
             ProcessBuilder peanutButter = new ProcessBuilder(binary.getAbsolutePath(), ipRanges, "-p",
@@ -42,8 +42,8 @@ public class scanExecutor {
         }
     };
 
-    public static void startScan(String ipRanges, String portRanges, String rate, ScanCallback callback) {
-        executor.submit(() -> runScan(ipRanges, portRanges, rate, callback)); // submit runScan task
+    public static void startScan(String ipRanges, String portRanges, String rate, String output, ScanCallback callback) {
+        executor.submit(() -> runScan(ipRanges, portRanges, rate, output, callback)); // submit runScan task
     }
 
     // IDK what this does exactly
