@@ -13,7 +13,7 @@ public class scanExecutor {
     private static final ExecutorService executor = Executors.newCachedThreadPool();
 
     // https://www.baeldung.com/java-executor-service-tutorial
-    private static void runScan(String ipRanges, String portRanges, String rate, String output, ScanCallback callback) {
+    public static void runScan(String ipRanges, String portRanges, String rate, String output, scanCallback callback) {
         try {
             // calls nativeUtil with game directory
             File binary = nativeUtil.getBinary(FabricLoader.getInstance().getGameDirectory());
@@ -52,12 +52,12 @@ public class scanExecutor {
         }
     };
 
-    public static void startScan(String ipRanges, String portRanges, String rate, String output, ScanCallback callback) {
+    public static void startScan(String ipRanges, String portRanges, String rate, String output, scanCallback callback) {
         executor.submit(() -> runScan(ipRanges, portRanges, rate, output, callback)); // submit runScan task
     }
 
     // IDK what this does exactly
-    public interface ScanCallback {
+    public interface scanCallback {
         void onComplete(String message);
         void onError(String message);
 	void onLog(String lines); // to Minecraft, i think?
