@@ -89,16 +89,21 @@ public class scanScreen extends Screen implements scanExecutor.scanCallback {
         context.fill(termX, termY, termX + termWidth, termY + termHeight, black); // black color
 
         int maxLines = (termHeight - 10) / font.lineHeight;
+		int startIndex = Math.max(0, logs.size() - maxLines); // show last X lines
         int currentY = termY + 5; // new lines are 5 pixels below
 
-        for (int i = 0; i < maxLines; i++) {
-            context.drawString(this.font, Component.literal("Line " + (i + 1)), termX + 5, currentY, white);
+        for (int i = startIndex; i < logs.size(); i++) {
+            context.drawString(this.font, Component.literal(logs.get(i)), termX + 5, currentY, white);
             currentY += this.font.lineHeight;
         }
     }
 
     // implement onLog method
     public void onLog(String line) {
+		logs.add(line);
+		if (logs.size() > 250) {
+	    	logs.remove(0); // keep at 250 elements or RAM go brrr...
+		}
     }
 
     // implement onComplete method
@@ -133,7 +138,7 @@ public class scanScreen extends Screen implements scanExecutor.scanCallback {
 
 	    if (!ips.isEmpty() || !ports.isEmpty() || !rate.isEmpty() || !outFile.isEmpty()) {
 		scanning = true;
-		scanExecutor.runScan(ips, ports, rate, outFile, this);
+		scanExecutor.startScan(ips, ports, rate, outFile, this);
 	    }
         }).bounds(outFileBox.getX() + outFileBox.getWidth() + 15, termY + termHeight + 10, (int)(widthForInputs * 0.25f), 20).build();
         this.addRenderableWidget(submitButton);
