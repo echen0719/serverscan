@@ -19,13 +19,23 @@ public class scanExecutor {
             File binary = nativeUtil.getBinary(FabricLoader.getInstance().getGameDirectory());
             File outputFile = new File(output); // output
 
-            // ./masscan x.x.x.x-y.y.y.y -p zzzzz --rate dddddd -oL "serversFound.txt"
+            // ./masscan x.x.x.x-y.y.y.y -p zzzzz --rate dddddd -oL output
             ProcessBuilder peanutButter = new ProcessBuilder(binary.getAbsolutePath(), ipRanges, "-p",
                 portRanges, "--rate", rate, "-oL", outputFile.getAbsolutePath()
             );
             
             peanutButter.redirectErrorStream(true);
             Process process = peanutButter.start();
+
+	    // for every line of output by the command, it takes it and then sends it to the Minecraft instance
+	    try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+            	    final String logLine = line;
+            	    Minecraft.getInstance().execute(() -> callback.onLog(logLine));
+                }
+	    }
+
             int exitCode = process.waitFor();
 
             if (exitCode == 0) {
@@ -50,5 +60,6 @@ public class scanExecutor {
     public interface ScanCallback {
         void onComplete(String message);
         void onError(String message);
+	void onLog(String lines); // to Minecraft, i think?
     }
 }
