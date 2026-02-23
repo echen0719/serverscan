@@ -22,11 +22,24 @@ public class nativeUtil {
             folder.mkdirs();
         }
 
-        executable = new File(folder, "masscan");
+	    String binName;
+	    String osName = System.getProperty("os.name");
+
+	    if (osName.toLowerCase().contains("win")) {
+	        binName = "masscan.exe";
+	    }
+    	else if (osName.toLowerCase().contains("linux")) {
+	        binName = "masscan";
+	    }
+	    else { // only support for Windows and Linux, nothing else now
+	        throw new UnsupportedOperationException("Unsupported OS: " + osName);
+	    }
+
+        executable = new File(folder, binName);
 
         if (!executable.exists()) {
             // gets the bin at the resource folder and then open a stream to it (i think?)
-            try (InputStream input = nativeUtil.class.getClassLoader().getResourceAsStream("native/masscan")) {
+            try (InputStream input = nativeUtil.class.getClassLoader().getResourceAsStream("native/" + binName)) {
                 if (input == null) throw new IOException("Could not find masscan binary in resources");
                 Files.copy(input, executable.toPath(), StandardCopyOption.REPLACE_EXISTING); // copies bin to folder
             }
