@@ -21,7 +21,7 @@ public class scanExecutor {
 
             // ./masscan x.x.x.x-y.y.y.y -p zzzzz --rate dddddd -oL output
             ProcessBuilder peanutButter = new ProcessBuilder(binary.getAbsolutePath(), ipRanges, "-p",
-                portRanges, "--rate", rate, "--exclude 255.255.255.255", "-oL", outputFile.getAbsolutePath()
+                portRanges, "--rate", rate, "--exclude", "255.255.255.255", "-oL", outputFile.getAbsolutePath()
             );
             
             peanutButter.redirectErrorStream(true);
