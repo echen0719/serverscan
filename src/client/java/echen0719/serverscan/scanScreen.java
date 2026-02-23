@@ -1,5 +1,8 @@
 package echen0719.serverscan;
 
+import java.util.List;
+import java.util.ArrayList;
+
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -7,7 +10,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 
 // https://wiki.fabricmc.net/tutorial:screen
-public class scanScreen extends Screen {
+public class scanScreen extends Screen implements scanExecutor.scanCallback {
     private final Screen parent;
 
     private EditBox ipBox;
@@ -19,7 +22,15 @@ public class scanScreen extends Screen {
     private int padding;
     private int widthForInputs;
 
+    private List<String> logs = new ArrayList<String>();
     private int termX, termY, termWidth, termHeight;
+
+    private Button submitButton;
+    private Button togglePauseButton;
+    private Button stopButton;
+
+    private boolean scanning = false;
+    private boolean paused = false;
 
     private int white = 0xFFFFFFFF;
     private int gray = 0xFFAAAAAA;
@@ -86,6 +97,20 @@ public class scanScreen extends Screen {
         }
     }
 
+    // implement onLog method
+    public void onLog(String line) {
+    }
+
+    // implement onComplete method
+    public void onComplete(String message) {
+	scanning = false;
+    }
+
+    // implement onError method
+    public void onError(String message) {
+	scanning = false;
+    }
+
     @Override
     protected void init() {
         super.init();
@@ -100,8 +125,16 @@ public class scanScreen extends Screen {
 
         createFormAndCalcTerm();
 
-	Button submitButton = Button.builder(Component.literal("Run Scan"), button -> {
-            //
+	submitButton = Button.builder(Component.literal("Run Scan"), button -> {
+	    String ips = ipBox.getValue().trim();
+	    String ports = portBox.getValue().trim();
+	    String rate = rateBox.getValue().trim();
+	    String outFile = outFileBox.getValue().trim();
+
+	    if (!ips.isEmpty() || !ports.isEmpty() || !rate.isEmpty() || !outFile.isEmpty()) {
+		scanning = true;
+		scanExecutor.runScan(ips, ports, rate, outFile, this);
+	    }
         }).bounds(outFileBox.getX() + outFileBox.getWidth() + 15, termY + termHeight + 10, (int)(widthForInputs * 0.25f), 20).build();
         this.addRenderableWidget(submitButton);
 
