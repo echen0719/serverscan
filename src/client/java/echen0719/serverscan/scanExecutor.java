@@ -13,7 +13,7 @@ public class scanExecutor {
     private static final ExecutorService executor = Executors.newCachedThreadPool();
 
     // https://www.baeldung.com/java-executor-service-tutorial
-    public static void runScan(String ipRanges, String portRanges, String rate, String output, scanCallback callback) {
+    private static void runScan(String ipRanges, String portRanges, String rate, String output, scanCallback callback) {
         try {
             // calls nativeUtil with game directory
             File binary = nativeUtil.getBinary(FabricLoader.getInstance().getGameDirectory());
@@ -21,7 +21,7 @@ public class scanExecutor {
 
             // ./masscan x.x.x.x-y.y.y.y -p zzzzz --rate dddddd -oL output
             ProcessBuilder peanutButter = new ProcessBuilder(binary.getAbsolutePath(), ipRanges, "-p",
-                portRanges, "--rate", rate, "-oL", outputFile.getAbsolutePath()
+                portRanges, "--rate", rate, "--exclude 255.255.255.255", "-oL", outputFile.getAbsolutePath()
             );
             
             peanutButter.redirectErrorStream(true);
@@ -60,6 +60,6 @@ public class scanExecutor {
     public interface scanCallback {
         void onComplete(String message);
         void onError(String message);
-	void onLog(String lines); // to Minecraft, i think?
+		void onLog(String lines); // to Minecraft, i think?
     }
 }
