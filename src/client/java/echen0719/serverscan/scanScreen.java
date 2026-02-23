@@ -16,6 +16,9 @@ public class scanScreen extends Screen {
     private EditBox outFileBox;
 
     private int formStartX, formStartY;
+    private int padding;
+    private int widthForInputs;
+
     private int termX, termY, termWidth, termHeight;
 
     private int white = 0xFFFFFFFF;
@@ -36,19 +39,12 @@ public class scanScreen extends Screen {
     }
 
     private void createFormAndCalcTerm() {
-        formStartX = pxW(0.05f); // start 5% of width out
-        formStartY = pxH(0.1f); // start 10% of height out
-
         int inputHeight = 20;
-        int padding = 20;
-
-        // whole width minus padding on each side and minus padding between boxes
-        int widthForInputs = this.width - (formStartX * 2) - (padding * 2);
 
         int ipBoxWidth = (int)(widthForInputs * 0.5f);
         int portBoxWidth = (int)(widthForInputs * 0.25f);
         int rateBoxWidth = (int)(widthForInputs * 0.25f);
-        int outFileBoxWidth = (int)(widthForInputs * 0.15f);
+        int outFileBoxWidth = (int)(widthForInputs * 0.25f);
 
         int portBoxX = formStartX + ipBoxWidth + padding;
         int rateBoxX = portBoxX + portBoxWidth + padding;
@@ -93,12 +89,32 @@ public class scanScreen extends Screen {
     @Override
     protected void init() {
         super.init();
+
+	formStartX = pxW(0.05f); // start 5% of width out
+	formStartY = pxH(0.1f); // start 10% of height out
+	padding = 20;
+
+	// whole width minus padding on each side and minus padding between boxes
+	widthForInputs = this.width - (formStartX * 2) - (padding * 2);
+	int formEnd = formStartX + widthForInputs + (padding * 2);
+
         createFormAndCalcTerm();
 
-        // buttonX = rateBox.getX() + rateBox.getWidth() - 100 --> align right with padding
+	Button submitButton = Button.builder(Component.literal("Run Scan"), button -> {
+            //
+        }).bounds(outFileBox.getX() + outFileBox.getWidth() + 15, termY + termHeight + 10, (int)(widthForInputs * 0.25f), 20).build();
+        this.addRenderableWidget(submitButton);
+
+	Button logsButton = Button.builder(Component.literal("View Past Scans"), button -> {
+            //
+        }).bounds(submitButton.getX() + submitButton.getWidth() + 15, termY + termHeight + 10, (int)(widthForInputs * 0.3f), 20).build();
+        this.addRenderableWidget(logsButton);
+
+	// this is all so the back button can be aligned to the right of the form
+	int backButtonWidth = (int)(widthForInputs * 0.2f);
         Button backButton = Button.builder(Component.literal("Back"), button -> {
             this.minecraft.setScreen(parent);
-        }).bounds(rateBox.getX() + rateBox.getWidth() - 100, termY + termHeight + 10, 100, 20).build();
+        }).bounds(formEnd - backButtonWidth, termY + termHeight + 10, backButtonWidth, 20).build();
         this.addRenderableWidget(backButton);
     }
 
