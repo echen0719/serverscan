@@ -27,14 +27,14 @@ public class scanExecutor {
             peanutButter.redirectErrorStream(true);
             Process process = peanutButter.start();
 
-	    // for every line of output by the command, it takes it and then sends it to the Minecraft instance
-	    try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
+			// for every line of output by the command, it takes it and then sends it to the Minecraft instance
+			try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
             	    final String logLine = line;
             	    Minecraft.getInstance().execute(() -> callback.onLog(logLine));
                 }
-	    }
+			}
 
             int exitCode = process.waitFor();
 
