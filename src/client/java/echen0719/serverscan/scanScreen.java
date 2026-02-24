@@ -177,8 +177,10 @@ public class scanScreen extends Screen implements scanExecutor.scanCallback {
 			pauseButton.setMessage(Component.literal("Resume"));
 		    }
 		    else {
-			scanExecutor.resume();
-			pauseButton.setMessage(Component.literal("Pause"));
+			if (!scanExecutor.isChunkRunning()) {
+			    scanExecutor.resume();
+			    pauseButton.setMessage(Component.literal("Pause"));
+			}
 		    }
         }).bounds(submitButton.getX(), termY + termHeight + 10, (int)(widthForInputs * 0.125f), 20).build();
 		pauseButton.visible = false;
