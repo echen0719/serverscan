@@ -23,7 +23,9 @@ public class scanExecutor {
     // volatile for allowing other threads to view changes?
     private static volatile boolean running = false;
     private static volatile boolean paused = false;
-    private static final int chunkSize = 32768; // 2^15
+    private static volatile boolean chunkRunning = false;
+
+    private static final int chunkSize = 262144; // 2^18
     private static final ConcurrentLinkedDeque<String> ipQueue = new ConcurrentLinkedDeque<String>();
 
     // https://stackoverflow.com/questions/12057853
@@ -82,6 +84,10 @@ public class scanExecutor {
 	ipQueue.addAll(chunks);
     }
 
+    public static boolean isChunkRunning() {
+	return chunkRunning;
+    }
+
     // https://www.baeldung.com/java-executor-service-tutorial
     private static void runScan(String portRanges, String rate, String output, scanCallback callback) {
 	currentCallback = callback;
@@ -116,13 +122,14 @@ public class scanExecutor {
 
 		// ./masscan x.x.x.x-y.y.y.y -p zzzzz --rate dddddd --exclude 255.255.255.255 --wait 5 --append-output -oL output
 		ProcessBuilder peanutButter = new ProcessBuilder(binary.getAbsolutePath(), ipChunk, "-p", portRanges, "--rate",
-		    rate, "--exclude", "255.255.255.255", "--wait", "1", "--append-output", "-oL", outputFile.getAbsolutePath()
-		); // 1 second wait time is good, i think?
+		    rate, "--exclude", "255.255.255.255", "--wait", "10", "--append-output", "-oL", outputFile.getCanonicalPath()
+		); // 10 second wait time is good, i think?
 
 		peanutButter.directory(gameDir); // paused.conf 
 		peanutButter.redirectErrorStream(true);
 		Process process = peanutButter.start();
 		currentProcess = process;
+		chunkRunning = true;
 
 		// for every line of output by the command, it takes it and then sends it to the Minecraft instance
 		try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
@@ -140,9 +147,9 @@ public class scanExecutor {
 		}
 
 		int exitCode = process.waitFor();
+		chunkRunning = false;
 
 		if (paused) { // handle pause
-		    ipQueue.addFirst(ipChunk);
                     continue; 
 		}
 
@@ -187,8 +194,7 @@ public class scanExecutor {
     public static void pause() {
 	try {
 	    paused = true;
-	    if (currentProcess != null) currentProcess.destroy(); // kills chunking as pause
-	    if (currentCallback != null) Minecraft.getInstance().execute(() -> currentCallback.onLog("Scan paused. Waiting to resume..."));
+	    if (currentCallback != null) Minecraft.getInstance().execute(() -> currentCallback.onLog("Scan pausing...Wait until chunk finished"));
 	}
 	catch (Exception e) {
             e.printStackTrace();
