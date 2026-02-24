@@ -26,7 +26,7 @@ public class scanScreen extends Screen implements scanExecutor.scanCallback {
     private int termX, termY, termWidth, termHeight;
 
     private Button submitButton;
-    private Button togglePauseButton;
+    private Button pauseButton;
     private Button stopButton;
 
     private boolean scanning = false;
@@ -99,8 +99,8 @@ public class scanScreen extends Screen implements scanExecutor.scanCallback {
     }
 
     // implement onLog method
-    public void onLog(String line) {
-		logs.add(line);
+    public void onLog(String message) {
+		logs.add(message);
 		if (logs.size() > 250) {
 	    	logs.remove(0); // keep at 250 elements or RAM go brrr...
 		}
@@ -108,48 +108,100 @@ public class scanScreen extends Screen implements scanExecutor.scanCallback {
 
     // implement onComplete method
     public void onComplete(String message) {
-	scanning = false;
+		logs.add(message);
+		if (logs.size() > 250) {
+		    logs.remove(0);
+		}
+	
+		scanning = false;
+		paused = false;
+
+		updateControlButtons();
     }
 
     // implement onError method
     public void onError(String message) {
-	scanning = false;
+		logs.add(message);
+		if (logs.size() > 250) {
+		    logs.remove(0);
+		}
+	
+		scanning = false;
+		paused = false;
+	
+		updateControlButtons();
+    }
+
+    public void updateControlButtons() {
+		submitButton.visible = !scanning;
+		pauseButton.visible = scanning;
+		stopButton.visible = scanning;
     }
 
     @Override
     protected void init() {
         super.init();
 
-	formStartX = pxW(0.05f); // start 5% of width out
-	formStartY = pxH(0.1f); // start 10% of height out
-	padding = 20;
-
-	// whole width minus padding on each side and minus padding between boxes
-	widthForInputs = this.width - (formStartX * 2) - (padding * 2);
-	int formEnd = formStartX + widthForInputs + (padding * 2);
+		formStartX = pxW(0.05f); // start 5% of width out
+		formStartY = pxH(0.1f); // start 10% of height out
+		padding = 20;
+	
+		// whole width minus padding on each side and minus padding between boxes
+		widthForInputs = this.width - (formStartX * 2) - (padding * 2);
+		int formEnd = formStartX + widthForInputs + (padding * 2);
 
         createFormAndCalcTerm();
 
-	submitButton = Button.builder(Component.literal("Run Scan"), button -> {
-	    String ips = ipBox.getValue().trim();
-	    String ports = portBox.getValue().trim();
-	    String rate = rateBox.getValue().trim();
-	    String outFile = outFileBox.getValue().trim();
-
-	    if (!ips.isEmpty() || !ports.isEmpty() || !rate.isEmpty() || !outFile.isEmpty()) {
-		scanning = true;
-		scanExecutor.startScan(ips, ports, rate, outFile, this);
-	    }
+		submitButton = Button.builder(Component.literal("Run Scan"), button -> {
+		    String ips = ipBox.getValue().trim();
+		    String ports = portBox.getValue().trim();
+		    String rate = rateBox.getValue().trim();
+		    String outFile = outFileBox.getValue().trim();
+	
+		    if (!ips.isEmpty() && !ports.isEmpty() && !rate.isEmpty() && !outFile.isEmpty()) {
+				scanExecutor.startScan(ips, ports, rate, outFile, this);
+		
+				scanning = true;
+				paused = false;		
+		
+				updateControlButtons();
+	    	}
         }).bounds(outFileBox.getX() + outFileBox.getWidth() + 15, termY + termHeight + 10, (int)(widthForInputs * 0.25f), 20).build();
         this.addRenderableWidget(submitButton);
 
-	Button logsButton = Button.builder(Component.literal("View Past Scans"), button -> {
-            //
-        }).bounds(submitButton.getX() + submitButton.getWidth() + 15, termY + termHeight + 10, (int)(widthForInputs * 0.3f), 20).build();
-        this.addRenderableWidget(logsButton);
+		pauseButton = Button.builder(Component.literal("Pause"), button -> {
+		    paused = !paused;
+	
+		    if (paused) {
+			scanExecutor.pause();
+			pauseButton.setMessage(Component.literal("Resume"));
+		    }
+		    else {
+			scanExecutor.resume();
+			pauseButton.setMessage(Component.literal("Pause"));
+		    }
+        }).bounds(submitButton.getX(), termY + termHeight + 10, (int)(widthForInputs * 0.125f), 20).build();
+		pauseButton.visible = false;
+        this.addRenderableWidget(pauseButton);
 
-	// this is all so the back button can be aligned to the right of the form
-	int backButtonWidth = (int)(widthForInputs * 0.2f);
+		stopButton = Button.builder(Component.literal("Stop"), button -> {
+		    scanExecutor.stop();
+	
+		    scanning = false;
+		    paused = false;
+	
+		    updateControlButtons();
+        }).bounds(pauseButton.getX() + submitButton.getWidth() / 2 + 5, termY + termHeight + 10, (int)(widthForInputs * 0.125f), 20).build();
+		stopButton.visible = false;
+        this.addRenderableWidget(stopButton); // pBx + (sBw - 10) / 2 + 10 --> pBx + sBw/2 + 5
+
+		Button logsButton = Button.builder(Component.literal("View Past Scans"), button -> {
+            //
+   	 	}).bounds(submitButton.getX() + submitButton.getWidth() + 15, termY + termHeight + 10, (int)(widthForInputs * 0.3f), 20).build();
+    	this.addRenderableWidget(logsButton);
+
+		// this is all so the back button can be aligned to the right of the form
+		int backButtonWidth = (int)(widthForInputs * 0.2f);
         Button backButton = Button.builder(Component.literal("Back"), button -> {
             this.minecraft.setScreen(parent);
         }).bounds(formEnd - backButtonWidth, termY + termHeight + 10, backButtonWidth, 20).build();
