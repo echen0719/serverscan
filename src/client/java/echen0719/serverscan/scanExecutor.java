@@ -162,9 +162,17 @@ public class scanExecutor {
     };
 
     public static void startScan(String ipRanges, String portRanges, String rate, String output, scanCallback callback) {
-	stop(); // kill thread before starting new one
+	try {
+	    running = false;
+	    paused = false;
+	    if (currentProcess != null) currentProcess.destroyForcibly();
+	    
+	    ipQueue.clear();
+	}
+	catch (Exception e) {
+            e.printStackTrace();
+        } // kill thread before starting new one
 
-	ipQueue.clear();
 	try {
 	    parseIPRanges(ipRanges);
 	}
