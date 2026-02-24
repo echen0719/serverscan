@@ -98,6 +98,12 @@ public class scanExecutor {
 		folder.mkdirs();
 	    }
             File outputFile = new File(folder, output); // output
+	    if (outputFile.exists()) {
+		running = false;
+
+		if (currentCallback != null) Minecraft.getInstance().execute(() -> callback.onError("File already exists. Used another file name."));
+		return;
+	    }
 
 	    while (running) {
 		while (paused && running) {
@@ -163,7 +169,7 @@ public class scanExecutor {
 	    parseIPRanges(ipRanges);
 	}
 	catch (Exception e) {
-	    if (currentCallback != null) currentCallback.onError(e.getMessage() + " | Invalid IP ranges");
+	    if (callback != null) callback.onError(e.getMessage() + " | Invalid IP ranges");
 	    e.printStackTrace();
 	}
 
