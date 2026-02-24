@@ -17,8 +17,8 @@ public class scanExecutor {
     private static final ExecutorService executor = Executors.newCachedThreadPool();
     
     // makes sure the process and callback are accessbile in the pause, resume, and stop methods
-    private static Process currentProcess = null;
-    private static scanCallback currentCallback = null;
+    private static volatile Process currentProcess = null;
+    private static volatile scanCallback currentCallback = null;
 
     // volatile for allowing other threads to view changes?
     private static volatile boolean running = false;
@@ -113,7 +113,7 @@ public class scanExecutor {
 
 	    while (running) {
 		while (paused && running) {
-                    Thread.sleep(1000);
+                    Thread.sleep(300);
                 }
 		if (!running) break;
 
@@ -170,9 +170,9 @@ public class scanExecutor {
 
     public static void startScan(String ipRanges, String portRanges, String rate, String output, scanCallback callback) {
 	try {
+	    if (running && callback != null) return;
 	    running = false;
 	    paused = false;
-	    if (currentProcess != null) currentProcess.destroyForcibly();
 	    
 	    ipQueue.clear();
 	}
@@ -184,7 +184,7 @@ public class scanExecutor {
 	    parseIPRanges(ipRanges);
 	}
 	catch (Exception e) {
-	    if (callback != null) callback.onError(e.getMessage() + " | Invalid IP ranges");
+	    if (callback != null) callback.onError("Invalid IP ranges");
 	    e.printStackTrace();
 	}
 
