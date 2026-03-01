@@ -180,7 +180,7 @@ public class scanExecutor {
 		ipRangeQueue.clear();
 
 		try {
-	    	List<long[]> rawRanges = IPUtils.parseIPRanges(ipRanges);
+	    	List<long[]> rawRanges = IPUtils.parseIPRanges(ipRanges, chunkSize);
 			ipRangeQueue.addAll(rawRanges);
 		}
 		catch (Exception e) {

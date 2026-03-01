@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class IPUtils {
+	private static final int chunkSize = 262144;
+
     // https://stackoverflow.com/questions/12057853
     public static long ipToLong(String ip) {
 		String[] parts = ip.split("\\.");
@@ -24,7 +26,7 @@ public class IPUtils {
         return o1 + "." + o2 + "." + o3 + "." + o4;
     }
 
-    public static List<long[]> parseIPRanges(String ipRange) {
+    public static List<long[]> parseIPRanges(String ipRange, int chunkSize) {
 		List<long[]> rawRanges = new ArrayList<long[]>();
 
 		// ex: ipRange = 1.2.3.4-5.6.7.8, 9.10.11.12
@@ -50,7 +52,11 @@ public class IPUtils {
 		
 	    	if (start > end) continue;
 
-	    	rawRanges.add(new long[] {start, end});
+	    	while (start <= end) {
+            	long unitEnd = Math.min(start + chunkSize - 1, end);
+            	rawRanges.add(new long[] {start, unitEnd});
+            	start = unitEnd + 1;
+        	}
 		} // shuffle chunks
 		Collections.shuffle(rawRanges);
         return rawRanges;
