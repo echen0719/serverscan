@@ -2,14 +2,15 @@ package echen0719.serverscan.screens;
 
 import java.util.List;
 
-import echen0719.serverscan.ServerscanClient;
-import echen0719.serverscan.scanExecutor;
-import echen0719.serverscan.utils.guiUtils;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
+
+import echen0719.serverscan.ServerscanClient;
+import echen0719.serverscan.scanExecutor;
+import echen0719.serverscan.utils.guiUtils;
 
 // https://wiki.fabricmc.net/tutorial:screen
 public class scanScreen extends Screen {

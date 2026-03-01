@@ -6,18 +6,24 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import echen0719.serverscan.utils.guiUtils;
+
 public class pastScansScreen extends Screen {
     private final Screen parent;
 
     private EditBox searchBox;
-
-    private Button searchSubmitButton, backButton;
+    private Button searchSubmitButton, openDirButton, refreshButton, backButton;
 
     private int guiStartX, guiStartY;
+    private int tableX, tableY, tableWidth, tableHeight;
+    private int widthForWidgets;
+
     private int padding = 16;
     private int widgetHeight = 20;
 
     private final int white = 0xFFFFFFFF;
+    private final int gray = 0xFFAAAAAA;
+    private final int black = 0xFF000000;
 
     public pastScansScreen(Screen parent) {
         super(Component.literal("View Past Scans"));
@@ -32,38 +38,77 @@ public class pastScansScreen extends Screen {
         return (int)(this.height * percent);
     }
 
+    private void createTopControlsAndCalcTable() {
+        int searchBoxWidth = (int)(widthForWidgets * 0.35f);
+        int searchSubmitButtonWidth = (int)(widthForWidgets * 0.15f);
+        int refreshButtonWidth = (int)(widthForWidgets * 0.15f);
+
+        tableX = guiStartX;
+        tableY = guiStartY + widgetHeight + 10;
+        tableWidth = widthForWidgets;
+        tableHeight = this.height - tableY - pxH(0.15f);
+
+        searchBox = guiUtils.createInputBox(this, guiStartX, guiStartY, searchBoxWidth, widgetHeight, "Input file name...");
+        this.addRenderableWidget(searchBox);
+
+        searchSubmitButton = guiUtils.createButton(this, "Search", searchBox.getX() + searchBox.getWidth() + padding, guiStartY, searchSubmitButtonWidth, widgetHeight,
+        button -> {
+            // search logic
+        });
+        this.addRenderableWidget(searchSubmitButton);
+
+        refreshButton = guiUtils.createButton(this, "Refresh", pxW(0.95f) - refreshButtonWidth, guiStartY, refreshButtonWidth, widgetHeight,
+        button -> {
+            // refresh logic
+        });
+        this.addRenderableWidget(refreshButton);
+    }
+
+    private void renderTable(GuiGraphics context) {
+        context.fill(tableX - 1, tableY - 1, tableX + tableWidth + 1, tableY + tableHeight + 1, gray);
+        context.fill(tableX, tableY, tableX + tableWidth, tableY + tableHeight, black);
+
+        // will finish table logic
+    }
+
+    private void createBottomButtons() {
+        int buttonY = tableY + tableHeight + 10;
+
+        int openDirButtonWidth = (int)(widthForWidgets * 0.25f);
+        int backButtonWidth = (int)(widthForWidgets * 0.2f);
+
+        openDirButton = guiUtils.createButton(this, "Open Directory", guiStartX, buttonY, openDirButtonWidth, widgetHeight,
+        button -> {
+            // open dir logic
+        });
+        this.addRenderableWidget(openDirButton);
+
+        backButton = guiUtils.createButton(this, "Back", guiStartX + widthForWidgets - backButtonWidth, buttonY, backButtonWidth, widgetHeight,
+        button -> {
+            this.minecraft.setScreen(parent);
+        });
+        this.addRenderableWidget(backButton);
+    }
+
     @Override
     protected void init() {
         super.init();
         this.clearWidgets(); // prevents duplicates
 
         guiStartX = pxW(0.05f);
-		guiStartY = pxH(0.15f);
+		guiStartY = pxH(0.05f);
 
-        int searchBoxWidth = pxW(0.35f);
-        int searchSubmitButtonWidth = pxW(0.15f);
-        int backButtonWidth = pxW(0.2f);
+        widthForWidgets = this.width - (guiStartX * 2);
 
-        searchBox = new EditBox(this.font, guiStartX, guiStartY, searchBoxWidth, widgetHeight, Component.literal(""));
-        searchBox.setHint(Component.literal("Input file name..."));
-        this.addRenderableWidget(searchBox);
-
-        searchSubmitButton = Button.builder(Component.literal("Search"), button -> {
-            // search logic
-        }).bounds(searchBox.getX() + searchBox.getWidth() + padding, guiStartY, searchSubmitButtonWidth, widgetHeight).build();
-        this.addRenderableWidget(searchSubmitButton);
-
-        backButton = Button.builder(Component.literal("Back"), button -> {
-            this.minecraft.setScreen(parent);
-        }).bounds(this.width / 2 - 50, this.height - 40, backButtonWidth, widgetHeight).build();
-        this.addRenderableWidget(backButton);
+        createTopControlsAndCalcTable();
+        createBottomButtons();
     }
 
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-
-        context.drawCenteredString(this.font, Component.literal("Past Scan Results Here"), this.width / 2, guiStartY - pxH(0.1f), white);
+    
+        renderTable(context);
     }
 }
 
