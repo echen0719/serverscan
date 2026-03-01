@@ -1,237 +1,235 @@
 package echen0719.serverscan;
 
 import java.io.File;
-import java.nio.file.Files;
+
 import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
+
+import java.util.concurrent.CopyOnWriteArrayList; // arraylist but for concurrency
 import java.util.concurrent.ConcurrentLinkedDeque; // queue but for concurrency
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-import net.minecraft.client.Minecraft;
+import echen0719.serverscan.utils.IPUtils;
+import echen0719.serverscan.utils.fileUtils;
+import echen0719.serverscan.utils.nativeUtil;
 import net.fabricmc.loader.api.FabricLoader;
 
 public class scanExecutor {
-    // executor pool that creates threads as it needs
+	// executor pool that creates threads as it needs
     private static final ExecutorService executor = Executors.newCachedThreadPool();
     
-    // makes sure the process and callback are accessbile in the pause, resume, and stop methods
+    // process and logs visible to all methods; removed callback
     private static volatile Process currentProcess = null;
-    private static volatile scanCallback currentCallback = null;
+    public static final CopyOnWriteArrayList<String> logs = new CopyOnWriteArrayList<String>();
 
     // volatile for allowing other threads to view changes?
-    private static volatile boolean running = false;
-    private static volatile boolean paused = false;
-    private static volatile boolean chunkRunning = false;
+    public static volatile boolean running = false;
+    public static volatile boolean paused = false;
 
-    private static final int chunkSize = 262144; // 2^18
-    private static final ConcurrentLinkedDeque<String> ipQueue = new ConcurrentLinkedDeque<String>();
+	public static volatile String rate = "";
+    public static volatile int chunkSize = 262144; // = 2^18
 
-    // https://stackoverflow.com/questions/12057853
-    private static long ipToLong(String ip) {
-	String[] parts = ip.split("\\.");
-	long result = 0;
-	for (String part : parts) {
-	    result = (result << 8) | Integer.parseInt(part);
-	}
-	return result;
-    }
+    private static final ConcurrentLinkedDeque<long[]> ipRangeQueue = new ConcurrentLinkedDeque<long[]>();
 
-    private static String longToIP(long ip) {
-        int o1 = (int)(ip >> 24) & 0xFF;
-        int o2 = (int)(ip >> 16) & 0xFF;
-        int o3 = (int)(ip >> 8) & 0xFF;
-        int o4 = (int)ip & 0xFF;
+	private static fileUtils filesManager;
 
-        return o1 + "." + o2 + "." + o3 + "." + o4;
-    }
-
-    private static void parseIPRanges(String ipRange) {
-	List<String> chunks = new ArrayList<String>();	
-
-	// ex: ipRange = 1.2.3.4-5.6.7.8, 9.10.11.12
-	String[] parts = ipRange.split(","); 
-
-	for (String part : parts) {
-	    part = part.trim();
-	    if (part.isEmpty()) continue;
-
-	    long start, end;
-
-	    if (part.contains("-")) {
-		String[] portions = part.split("-");
-		if (portions.length != 2) continue;
-		
-		start = ipToLong(portions[0].trim());
-		end = ipToLong(portions[1].trim());
-	    }
-	    else { // for single IP inputs
-		start = ipToLong(part);
-		end = start;
-	    }
-		
-	    if (start > end) continue;
-
-	    // ex: chunks of 0-2047, 2048-4095, 4096-4999 for 5000 length
-	    for (long i = start; i <= end; i += chunkSize) {
-		long chunkEnd = Math.min(i + chunkSize - 1, end);
-		chunks.add(longToIP(i) + "-" + longToIP(chunkEnd));
-	    }
-	}
-
-	Collections.shuffle(chunks); // shuffle to not overload servers
-	ipQueue.addAll(chunks);
-    }
-
-    public static boolean isChunkRunning() {
-	return chunkRunning;
+    private static void addLog(String message) {
+		logs.add(message);
+		if (logs.size() > 500) { // reduces logs memory usage with 500 lines
+	    	logs.removeFirst();
+		}
     }
 
     // https://www.baeldung.com/java-executor-service-tutorial
-    private static void runScan(String portRanges, String rate, String output, scanCallback callback) {
-	currentCallback = callback;
-	running = true;
-	paused = false;
+    private static void runScan(String portRanges, String output) {
+		addLog("Scan started...");
 
         try {
-	    File gameDir = FabricLoader.getInstance().getGameDirectory();
+	    	File gameDir = FabricLoader.getInstance().getGameDirectory();
+        	File binary = nativeUtil.getBinary(gameDir); // calls nativeUtil with game directory
+	    	
+			filesManager = new fileUtils(gameDir);
 
-            // calls nativeUtil with game directory
-            File binary = nativeUtil.getBinary(gameDir);
-	    File folder = new File(gameDir, "serverscan");
-	    if (!folder.exists()) {
-		folder.mkdirs();
-	    }
-            File outputFile = new File(folder, output); // output
-	    if (outputFile.exists()) {
-		running = false;
+            if (filesManager.outputFileExists(output)) {
+				running = false;
+                addLog("File already exists. Used another file name.");
+                return;
+			}
 
-		if (currentCallback != null) Minecraft.getInstance().execute(() -> callback.onError("File already exists. Used another file name."));
-		return;
-	    }
+			filesManager.createOutputFile(output);
 
-	    while (running) {
-		while (paused && running) {
-                    Thread.sleep(300);
+	    	int chunkIndex = 0;
+			long[] activeRange = null;
+			long nextIP = 0;
+
+	    	while (running) {
+				if (paused) { // merge on pause
+					if (activeRange != null && nextIP <= activeRange[1]) {
+						ipRangeQueue.addLast(new long[] {nextIP, activeRange[1]});
+					}
+
+		    		filesManager.mergeChunks(output);
+					activeRange = null;
+					nextIP = 0;
+
+					currentProcess = null;
+                    
+					while (paused && running) {
+                        Thread.sleep(300);
+                    }
+                    if (!running) break;
+                    continue;
                 }
-		if (!running) break;
 
-		String ipChunk = ipQueue.pollFirst();
-		if (ipChunk == null) break;
+				if (activeRange != null && nextIP > activeRange[1]) {
+					activeRange = null;
+				}
 
-		// ./masscan x.x.x.x-y.y.y.y -p zzzzz --rate dddddd --exclude 255.255.255.255 --wait 5 --append-output -oL output
-		ProcessBuilder peanutButter = new ProcessBuilder(binary.getAbsolutePath(), ipChunk, "-p", portRanges, "--rate",
-		    rate, "--exclude", "255.255.255.255", "--wait", "10", "--append-output", "-oL", outputFile.getCanonicalPath()
-		); // 10 second wait time is good, i think?
+				if (activeRange == null) {
+					activeRange = ipRangeQueue.pollFirst();
+					if (activeRange != null) nextIP = activeRange[0];
+				}
 
-		peanutButter.directory(gameDir); // paused.conf 
-		peanutButter.redirectErrorStream(true);
-		Process process = peanutButter.start();
-		currentProcess = process;
-		chunkRunning = true;
+				if (activeRange == null) break; // No more work
+				
+				long chunkEnd = Math.min(nextIP + chunkSize - 1, activeRange[1]);
+				String ipChunk = IPUtils.longToIP(nextIP) + "-" + IPUtils.longToIP(chunkEnd);
+				System.out.println("DEBUG:" + ipChunk);
+				System.out.println("IPs to scan: " + (chunkEnd - nextIP + 1));
+				nextIP = chunkEnd + 1;
+				if (nextIP > activeRange[1]) activeRange = null;
 
-		// for every line of output by the command, it takes it and then sends it to the Minecraft instance
-		try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
-		    String line;
-		    while ((line = reader.readLine()) != null) {
-			final String logLine = line;
-			if (currentCallback != null) Minecraft.getInstance().execute(() -> callback.onLog(logLine));
-		    }
-		}
-		catch (Exception e){
-		    if (!paused) {
-			e.printStackTrace();
-           		if (currentCallback != null) callback.onError(e.getMessage());
-		    }
-		}
+				File chunkFile = filesManager.createChunkFile(output, chunkIndex);
+				chunkIndex++;
 
-		int exitCode = process.waitFor();
-		chunkRunning = false;
+				String time = "7";
+				if (chunkSize <= 16384) time = "3";
+				else if (chunkSize <= 131702) time = "5";
+				else if (chunkSize <= 524288) time = "7";
+				else if (chunkSize <= 2097152) time = "10";
+				else time = "12";
 
-		if (paused) { // handle pause
-                    continue; 
-		}
+				// ./masscan x.x.x.x-y.y.y.y -p zzzzz --rate dddddd --exclude 255.255.255.255 --wait 5 --append-output -oL output
+				ProcessBuilder peanutButter = new ProcessBuilder(binary.getAbsolutePath(), ipChunk, "-p", portRanges,
+					"--rate", scanExecutor.rate, "--exclude", "255.255.255.255", "--wait", time, "-oL", chunkFile.getCanonicalPath()
+				); // 7 second wait time is good, i think?
 
-		if (exitCode != 0 && running) { // handle chunk error
-		    if (currentCallback != null) Minecraft.getInstance().execute(() -> callback.onLog("Chunk failed."));
-		}
-	    }
+				peanutButter.directory(gameDir); // paused.conf 
+				peanutButter.redirectErrorStream(true);
+				Process process = peanutButter.start();
+				currentProcess = process;
 
-	    if (running) {
-		if (currentCallback != null) Minecraft.getInstance().execute(() -> callback.onComplete("Scan complete."));
-	    }
+				// for every line of output by the command, it takes it and then sends it to the Minecraft instance
+				try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
+					String line;
+					while (running && (line = reader.readLine()) != null) {
+						addLog(line);
+					}
+				}
+				catch (Exception e) {
+					if (!paused) {
+						e.printStackTrace();
+						addLog("Error reading output: " + e.getMessage());
+					}
+				}
+
+				int exitCode = process.waitFor();
+				if (exitCode != 0 && running) { // handle chunk error
+					addLog("Chunk failed (Exit: " + exitCode + ")");
+				}
+	    	}
+
+	    	if (running) {
+				addLog("Scan complete.");
+	    	}
         } 
         catch (Exception e) {
             e.printStackTrace();
-            if (currentCallback != null) callback.onError(e.getMessage());
+            addLog("Error with scanning: " + e.getMessage());
         }
-    };
+		finally { // reset all status variables
+	    	running = false;
+	    	paused = false;
+	    	currentProcess = null;
+			ipRangeQueue.clear();
 
-    public static void startScan(String ipRanges, String portRanges, String rate, String output, scanCallback callback) {
-	try {
-	    if (running && callback != null) return;
-	    running = false;
-	    paused = false;
-	    
-	    ipQueue.clear();
-	}
-	catch (Exception e) {
-            e.printStackTrace();
-        } // kill thread before starting new one
-
-	try {
-	    parseIPRanges(ipRanges);
-	}
-	catch (Exception e) {
-	    if (callback != null) callback.onError("Invalid IP ranges");
-	    e.printStackTrace();
-	}
-
-        executor.submit(() -> runScan(portRanges, rate, output, callback)); // submit runScan task
+	    	try { // merge when stopped
+				if (filesManager != null) {
+                    filesManager.mergeChunks(output);
+                }
+	    	}
+	    	catch (Exception e) {
+				addLog("Could not clean up .tmp.chunk files...");
+	    	}
+		}
     }
 
-    public static void pause() {
-	try {
-	    paused = true;
-	    if (currentCallback != null) Minecraft.getInstance().execute(() -> currentCallback.onLog("Scan pausing...Wait until chunk finished"));
+	public static boolean isChunkRunning() {
+    	return currentProcess != null;
 	}
-	catch (Exception e) {
-            e.printStackTrace();
-            if (currentCallback != null) currentCallback.onError(e.getMessage());
-        }
+
+    public static void startScan(String ipRanges, String portRanges, String rate, int chunkSize, String output) {
+		if (running) return; // prevent race-conditions
+
+		running = true;
+		paused = false;
+
+		scanExecutor.rate = rate;
+		scanExecutor.chunkSize = chunkSize; // static issues
+		ipRangeQueue.clear();
+
+		try {
+	    	List<long[]> rawRanges = IPUtils.parseIPRanges(ipRanges);
+			ipRangeQueue.addAll(rawRanges);
+		}
+		catch (Exception e) {
+	    	addLog("Invalid IP ranges");
+	    	e.printStackTrace();
+	    	return;
+		}
+
+		logs.clear();
+
+        executor.submit(() -> runScan(portRanges, output)); // submit runScan task
     }
 
-    public static void resume() {
-	try {
-	    paused = false;
-	    if (currentCallback != null) Minecraft.getInstance().execute(() -> currentCallback.onLog("Scan resuming..."));
-        } 
-        catch (Exception e) {
-            e.printStackTrace();
-            if (currentCallback != null) currentCallback.onError(e.getMessage());
-        }
+    public static void pause() { // user presses pause button
+		if (!running) return;
+		paused = true;
+		addLog("Scan pausing...Wait until chunk finishes");
+    }
+
+    public static void resume(String newRate, int newChunkSize) {
+		if (!running) return;
+		paused = false;
+
+		rate = newRate;
+		chunkSize = newChunkSize;
+
+		addLog("Scan resuming with rate=" + rate + " and batch_size=" + chunkSize);
     }
 
     public static void stop() {
-	try {
-	    running = false;
-	    paused = false;
-	    if (currentProcess != null) currentProcess.destroyForcibly();
-	    
-	    ipQueue.clear();
+		if (!running) return;
+		running = false;
 
-	    if (currentCallback != null) Minecraft.getInstance().execute(() -> currentCallback.onComplete("Scan stopped."));
-	}
-	catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+		if (currentProcess != null) {
+	    	currentProcess.destroy(); // graceful SIGTERM
 
-    // IDK what this does exactly
-    public interface scanCallback {
-        void onComplete(String message);
-        void onError(String message);
-	void onLog(String lines); // to Minecraft, i think?
+	    	try {
+				if (!currentProcess.waitFor(5, TimeUnit.SECONDS)) {
+		    		currentProcess.destroyForcibly(); // if destroy() doesn't terminate, it waits 5s for kill
+		    		addLog("Chunk closed abruptly (File may be incomplete)");
+				}
+	    	}
+	    	catch (Exception e) {
+				currentProcess.destroyForcibly(); // destroyForcibly even if error
+				addLog("Error closing previous chunk: " + e.getMessage());
+	    	}
+		}
+
+		ipRangeQueue.clear();
+		addLog("Scan stopped");
     }
 }

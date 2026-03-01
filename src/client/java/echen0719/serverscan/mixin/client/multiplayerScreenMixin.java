@@ -1,5 +1,6 @@
 package echen0719.serverscan.mixin.client;
-import echen0719.serverscan.scanScreen;
+import echen0719.serverscan.ServerscanClient;
+import echen0719.serverscan.screens.scanScreen;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,7 +28,11 @@ public class multiplayerScreenMixin extends Screen {
 
 		// https://github.com/orgs/FabricMC/discussions/1795
 		Button openButton = Button.builder(Component.literal("Scan Servers"), (button) -> {
-            this.minecraft.setScreen(new scanScreen(this));
+            if (ServerscanClient.mainScreen == null) {
+				ServerscanClient.mainScreen = new scanScreen(this);
+			}
+
+			this.minecraft.setScreen(ServerscanClient.mainScreen);
         }).bounds(x, y, buttonWidth, buttonHeight).build();
 		this.addRenderableWidget(openButton);
 	}
