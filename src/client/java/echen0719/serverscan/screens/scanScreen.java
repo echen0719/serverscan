@@ -4,6 +4,7 @@ import java.util.List;
 
 import echen0719.serverscan.ServerscanClient;
 import echen0719.serverscan.scanExecutor;
+import echen0719.serverscan.utils.guiUtils;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -14,27 +15,27 @@ import net.minecraft.network.chat.Component;
 public class scanScreen extends Screen {
     private final Screen parent;
 
-    private EditBox ipBox;
-    private EditBox portBox;
-    private EditBox rateBox;
-    private EditBox chunkBox;
-    private EditBox outFileBox;
+    // gui components
+    private EditBox ipBox, portBox, rateBox, chunkBox, outFileBox;
+    private Button submitButton, pauseButton, stopButton, logsButton, backButton;
 
+    // static values
     private static String savedIPs = "";
     private static String savedPorts = "";
     private static String savedRate = "";
     private static String savedChunkSize = "";
     private static String savedOutFile = "";
 
+    // values calculated by init
     private int formStartX, formStartY;
-    private int padding = 16;
-    private int widthForInputs;
-    private int inputHeight = 20;
-
     private int termX, termY, termWidth, termHeight;
+    private int widthForInputs;
 
-    private Button submitButton, pauseButton, stopButton;
+    // layout constants
+    private int padding = 16;
+    private int widgetHeight = 20;
 
+    // colors
     private final int white = 0xFFFFFFFF;
     private final int gray = 0xFFAAAAAA;
     private final int black = 0xFF000000;
@@ -52,11 +53,30 @@ public class scanScreen extends Screen {
         return (int)(this.height * percent);
     }
 
-    private EditBox createInputBox(int x, int y, int width, String hint) {
-        EditBox box = new EditBox(this.font, x, y, width, inputHeight, Component.literal(""));
-        box.setHint(Component.literal(hint));
-        this.addRenderableWidget(box);
-        return box;
+    private int parseChunkSize(String text, String logMessage) {
+        int chunkSize = 262144; // default
+        try {
+            chunkSize = Integer.parseInt(text.trim());
+            if (chunkSize <= 0) {
+                scanExecutor.logs.add("Batch size must be greater than 0.");
+                return -1;
+            }
+        } 
+        catch (Exception e) {
+            scanExecutor.logs.add(logMessage);
+            e.printStackTrace();
+        }
+        return chunkSize;
+    }
+
+    private void setInputState(EditBox box, boolean active) {
+        box.active = active;
+        if (active) {
+            box.setTextColor(white);
+        }
+        else {
+            box.setTextColor(gray);
+        }
     }
 
     private void createFormAndCalcTerm() {
@@ -71,17 +91,23 @@ public class scanScreen extends Screen {
 	    int chunkBoxX = rateBoxX + rateBoxWidth + padding;
 
         termX = formStartX;
-        termY = formStartY + inputHeight + 10;
+        termY = formStartY + widgetHeight + 10;
         termWidth = (chunkBoxX + chunkBoxWidth) - formStartX;
         termHeight = this.height - termY - pxH(0.15f);
 
         int outFileBoxY = termY + termHeight + 10; // don't want the line to be too long
 
-        ipBox = createInputBox(formStartX, formStartY, ipBoxWidth, "0.0.0.0-255.255.255.255");
-        portBox = createInputBox(portBoxX, formStartY, portBoxWidth, "25565");
-        rateBox = createInputBox(rateBoxX, formStartY, rateBoxWidth, "100000");
-        chunkBox = createInputBox(chunkBoxX, formStartY, chunkBoxWidth, "65536");
-        outFileBox = createInputBox(formStartX, outFileBoxY, outFileBoxWidth, "output.txt");
+        ipBox = guiUtils.createInputBox(this, formStartX, formStartY, ipBoxWidth, widgetHeight, "0.0.0.0-255.255.255.255");
+        portBox = guiUtils.createInputBox(this, portBoxX, formStartY, portBoxWidth, widgetHeight, "25565");
+        rateBox = guiUtils.createInputBox(this, rateBoxX, formStartY, rateBoxWidth, widgetHeight, "100000");
+        chunkBox = guiUtils.createInputBox(this, chunkBoxX, formStartY, chunkBoxWidth, widgetHeight, "65536");
+        outFileBox = guiUtils.createInputBox(this, formStartX, outFileBoxY, outFileBoxWidth, widgetHeight, "output.txt");
+
+        this.addRenderableWidget(ipBox);
+        this.addRenderableWidget(portBox);
+        this.addRenderableWidget(rateBox);
+        this.addRenderableWidget(chunkBox);
+        this.addRenderableWidget(outFileBox);
     }
 
     private void createBottomButtons() {
@@ -93,7 +119,8 @@ public class scanScreen extends Screen {
         int logsWidth = (int)(widthForInputs * 0.3f);
         int backWidth = (int)(widthForInputs * 0.2f);
 
-        submitButton = Button.builder(Component.literal("Run Scan"), button -> {
+        submitButton = guiUtils.createButton(this, "Run Scan", outFileBox.getX() + outFileBox.getWidth() + padding, buttonY, submitWidth, widgetHeight,
+        button -> {
 		    String ips = ipBox.getValue().trim();
 		    String ports = portBox.getValue().trim();
 		    String rate = rateBox.getValue().trim();
@@ -102,21 +129,11 @@ public class scanScreen extends Screen {
 	
 		    if (ips.isEmpty() || ports.isEmpty() || rate.isEmpty() || chunkText.isEmpty() || outFile.isEmpty()) {
 				scanExecutor.logs.add("Fill in the fields before scanning.");
+                return;
 	    	}
 
-            int chunkSize = 262144;
-
-            try {
-                chunkSize = Integer.parseInt(chunkText);
-                if (chunkSize <= 0) {
-                    scanExecutor.logs.add("Batch size must be greater than 0.");
-                    return;
-                }
-            } 
-            catch (Exception e) {
-                scanExecutor.logs.add("Invalid batch size, using batch_size=" + chunkSize);
-                e.printStackTrace();
-            }
+            int chunkSize = parseChunkSize(chunkText, "Invalid batch size, using default");
+            if (chunkSize == -1) return;
 
             savedIPs = ips;
             savedPorts = ports;
@@ -126,51 +143,87 @@ public class scanScreen extends Screen {
                 
             scanExecutor.startScan(ips, ports, rate, chunkSize, outFile);
 			updateControlButtons();
-        }).bounds(outFileBox.getX() + outFileBox.getWidth() + padding, buttonY, submitWidth, 20).build();
+        });
         this.addRenderableWidget(submitButton);
 
-		pauseButton = Button.builder(Component.literal("Pause"), button -> {
+        pauseButton = guiUtils.createButton(this, "Pause", submitButton.getX(), buttonY, pauseWidth, widgetHeight,
+        button -> {
 		    if (scanExecutor.paused) { // user updates values during pause
                 String rateVal = rateBox.getValue().trim();
-                int chunkVal = 262144;
-                try {
-                    chunkVal = Integer.parseInt(chunkBox.getValue().trim());
-                } 
-                catch (Exception e) {
-                    scanExecutor.logs.add("Invalid batch size, using batch_size=" + chunkVal);
-                    e.printStackTrace();
-                }
-                if (chunkVal > 0) scanExecutor.resume(rateVal, chunkVal);
+                int chunkSize = parseChunkSize(chunkBox.getValue().trim(), "Invalid batch size, using default");
+                if (chunkSize == -1) return;
+
+                scanExecutor.resume(rateVal, chunkSize);
             }
             else {
                 scanExecutor.pause();
             }
 		    updateControlButtons();
-        }).bounds(submitButton.getX(), buttonY, pauseWidth, 20).build();
+        });
         this.addRenderableWidget(pauseButton);
 
-		stopButton = Button.builder(Component.literal("Stop"), button -> {
+        stopButton = guiUtils.createButton(this, "Stop", pauseButton.getX() + pauseButton.getWidth(), buttonY, stopWidth, widgetHeight,
+        button -> {
 		    scanExecutor.stop();
 		    updateControlButtons();
-        }).bounds(pauseButton.getX() + pauseButton.getWidth(), buttonY, stopWidth, 20).build();
-        this.addRenderableWidget(stopButton); // pBx + (sBw - 10) / 2 + 10 --> pBx + sBw/2 + 5
+        });
+        this.addRenderableWidget(stopButton);
 
-		Button logsButton = Button.builder(Component.literal("View Past Scans"), button -> {
+        logsButton = guiUtils.createButton(this, "View Past Scans", submitButton.getX() + submitButton.getWidth() + padding, buttonY, logsWidth, widgetHeight,
+        button -> {
             if (ServerscanClient.logsScreen == null) {
 				ServerscanClient.logsScreen = new pastScansScreen(this);
 			}
 
 			this.minecraft.setScreen(ServerscanClient.logsScreen);
-   	 	}).bounds(submitButton.getX() + submitButton.getWidth() + padding, buttonY, logsWidth, 20).build();
-    	this.addRenderableWidget(logsButton);
+        });
+        this.addRenderableWidget(logsButton);
 
-        Button backButton = Button.builder(Component.literal("Back"), button -> {
+        backButton = guiUtils.createButton(this, "Back", logsButton.getX() + logsButton.getWidth() + padding, buttonY, backWidth, widgetHeight,
+        button -> {
             this.minecraft.setScreen(parent);
-        }).bounds(logsButton.getX() + logsButton.getWidth() + padding, buttonY, backWidth, 20).build();
+        });
         this.addRenderableWidget(backButton);
     }
 
+    public void updateControlButtons() {
+	    submitButton.visible = !scanExecutor.running;
+	    pauseButton.visible = scanExecutor.running;
+	    stopButton.visible = scanExecutor.running;
+
+	    if (!scanExecutor.running) { // if finished scanning, all boxes become editable
+            setInputState(ipBox, true);
+            setInputState(portBox, true);
+            setInputState(rateBox, true);
+            setInputState(chunkBox, true);
+            setInputState(outFileBox, true);
+            return;
+        }
+
+        setInputState(ipBox, false);
+        setInputState(portBox, false);
+        setInputState(outFileBox, false);
+
+	    if (scanExecutor.paused) {
+	        pauseButton.setMessage(Component.literal("Resume"));
+            pauseButton.active = !scanExecutor.isChunkRunning(); // disable until chunk finishes
+
+            // batch size and rate allowed for change except the following during a pause
+            setInputState(rateBox, true);
+            setInputState(chunkBox, true);
+	        }
+	    else {
+	        pauseButton.setMessage(Component.literal("Pause"));
+            pauseButton.active = true;
+
+            setInputState(rateBox, false);
+            setInputState(chunkBox, false);
+        }
+    }
+
     public void renderTerm(GuiGraphics context) { // context works only within render()
+        int termInset = 5;
+
         // black background with gray borders
         context.fill(termX - 1, termY - 1, termX + termWidth + 1, termY + termHeight + 1, gray); // gray color
         context.fill(termX, termY, termX + termWidth, termY + termHeight, black); // black color
@@ -179,48 +232,11 @@ public class scanScreen extends Screen {
 	    List<String> logs = scanExecutor.logs; 
 
 	    int startIndex = Math.max(0, logs.size() - maxLines); // show last X lines
-        int currentY = termY + 5; // new lines are 5 pixels below
+        int currentY = termY + termInset; // new lines are 5 pixels below
 
         for (int i = startIndex; i < logs.size(); i++) {
-            context.drawString(this.font, Component.literal(logs.get(i)), termX + 5, currentY, white);
+            context.drawString(this.font, Component.literal(logs.get(i)), termX + termInset, currentY, white);
             currentY += this.font.lineHeight;
-        }
-    }
-
-    public void updateControlButtons() {
-	    submitButton.visible = !scanExecutor.running;
-	    pauseButton.visible = scanExecutor.running;
-	    stopButton.visible = scanExecutor.running;
-
-	    if (scanExecutor.running) {
-	        if (scanExecutor.paused) {
-		        pauseButton.setMessage(Component.literal("Resume"));
-                pauseButton.active = !scanExecutor.isChunkRunning(); // disable until chunk finishes
-
-                // batch size and rate allowed for change except the following during a pause
-                ipBox.active = false; portBox.active = false; outFileBox.active = false;
-                rateBox.active = true; chunkBox.active = true;
-
-                ipBox.setTextColor(gray); portBox.setTextColor(gray); outFileBox.setTextColor(gray);
-                rateBox.setTextColor(white); chunkBox.setTextColor(white);
-	        }
-	        else {
-		        pauseButton.setMessage(Component.literal("Pause"));
-                pauseButton.active = true;
-
-                ipBox.active = false; portBox.active = false; rateBox.active = false;
-                chunkBox.active = false; outFileBox.active = false;
-
-                ipBox.setTextColor(gray); portBox.setTextColor(gray); rateBox.setTextColor(gray);
-                chunkBox.setTextColor(gray); outFileBox.setTextColor(gray);
-	        }
-	    }
-        else { // if finished scanning, all boxes become editable
-            ipBox.active = true; portBox.active = true; outFileBox.active = true;
-            rateBox.active = true; chunkBox.active = true;
-
-            ipBox.setTextColor(white); portBox.setTextColor(white); outFileBox.setTextColor(white);
-            rateBox.setTextColor(white); chunkBox.setTextColor(white);
         }
     }
 
@@ -262,8 +278,5 @@ public class scanScreen extends Screen {
 	    context.drawString(this.font, Component.literal("Batch size: "), chunkBox.getX(), chunkBox.getY() + labelOffsetY, white);
 
         renderTerm(context);
-
-        // bro, this single line below caused me so much confusion, it turns out colors are in 0xFFFFFFFF format, not 0xFFFFFF
-        // context.drawCenteredString(this.font, Component.literal("Ha! You cliked a button"), this.width/2, this.height/2, white);
-    }  
+    }
 }
