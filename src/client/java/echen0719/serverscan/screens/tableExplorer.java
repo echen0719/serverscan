@@ -35,11 +35,17 @@ public class tableExplorer {
     private int scrollMax = 0;
     private int visibleRows = 0;
 
-    public tableExplorer(Screen screen, GuiGraphics context, int tableX, int tableY, int tableWidth, int tableHeight, int borderColor, int innerColor) {
-        this.screen = screen; this.context = context;
+    private int mouseX = -1; private int mouseY = -1;
+
+    public tableExplorer(Screen screen, int tableX, int tableY, int tableWidth, int tableHeight, int borderColor, int innerColor) {
+        this.screen = screen;
         this.tableX = tableX; this.tableY = tableY;
         this.tableWidth = tableWidth; this.tableHeight = tableHeight;
         this.borderColor = borderColor; this.innerColor = innerColor;
+    }
+
+    public void setContext(GuiGraphics context) {
+        this.context = context;
     }
     
     public void createBackground() {
@@ -53,39 +59,72 @@ public class tableExplorer {
     public void renderFileTable() {
         File[] items = filesManager.getChildFolders();
 
-        visibleRows = tableHeight / rowHeight;
         int totalRows = items.length;
+        visibleRows = tableHeight / rowHeight;
         scrollMax = Math.max(0, totalRows - visibleRows);
 
         for (int i = 0; i < visibleRows; i++) {
             int rowY = tableY + (i * rowHeight);
             int index = scrollPos + i;
 
-            if (i % 2 == 0) {
-                context.fill(tableX + 1, rowY, tableX + tableWidth - scrollBarWidth - 1, rowY + rowHeight, darkGray);
-            }
-            else {
-                context.fill(tableX + 1, rowY, tableX + tableWidth - scrollBarWidth - 1, rowY + rowHeight, lightGray);
-            }
-
             if (index >= 0 && index < totalRows) {
-                String fileName = items[index].getName();
+                if (i % 2 == 0) {
+                    context.fill(tableX + 1, rowY, tableX + tableWidth - scrollBarWidth - 1, rowY + rowHeight, darkGray);
+                }
+                else {
+                    context.fill(tableX + 1, rowY, tableX + tableWidth - scrollBarWidth - 1, rowY + rowHeight, lightGray);
+                }
+
+                File item = items[index];
+                String fileName = "";
+
+                if (item.isDirectory()) { // icons, i guess
+                    fileName = "📁  " + items[index].getName();
+                }
+                else if (item.isFile()) {
+                    fileName = "📄  " + items[index].getName();
+                }
+                
                 if (fileName.length() > 25) fileName = fileName.substring(0, 22) + "...";
                 context.drawString(screen.getFont(), fileName, tableX + 5, rowY + 5, white);
             }
         }
+
+        renderScrollBar(items);
+    }
+
+    public void renderScrollBar(File[] items) {
+        int totalRows = items.length;
+
+        if (totalRows <= visibleRows) return;
+
+        int scrollBarX = tableX + tableWidth - scrollBarWidth;
+        // 20 or ratio between visible rows to total calcualted
+
+        int scrollBarHeight = Math.max(20, (int)(tableHeight * ((float) visibleRows / totalRows)));
+        int scrollableHeight = tableHeight - scrollBarHeight;
+        
+        int scrollBarY = tableY;
+        if (scrollMax > 0) { // calculate position of scroll bar by scrollPos
+            scrollBarY = tableY + (int)(scrollableHeight * ((float) scrollPos / scrollMax));
+        }
+
+        context.fill(scrollBarX, scrollBarY, scrollBarX + scrollBarWidth, scrollBarY + scrollBarHeight, scrollBarColor);
+    }
+
+    private void handleScrollPos() {
+        scrollPos = Math.max(0, Math.min(scrollMax, scrollPos));
     }
 
     public void scroll(int amount) {
-        scrollPos = Math.max(0, Math.min(scrollMax, scrollPos + amount));
+        scrollPos += amount;
+        handleScrollPos();
     }
 
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        if (mouseX >= tableX && mouseX <= tableX + tableWidth &&
+    public void handleScroll(double mouseX, double mouseY, double delta) {
+        if (mouseX >= tableX && mouseX <= tableX + tableWidth && // if mouse is inside table
             mouseY >= tableY && mouseY <= tableY + tableHeight) {
-            scroll((int)(-delta)); // negative delta = scroll up
-            return true;
+            scroll((int)(-delta * rowHeight)); // negative delta = scroll up
         }
-        return false;
     }
 }

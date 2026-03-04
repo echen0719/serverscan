@@ -5,6 +5,8 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents; // fabric scroll
+import net.fabricmc.fabric.api.event.Event;
 
 import echen0719.serverscan.utils.guiUtils;
 import echen0719.serverscan.screens.tableExplorer;
@@ -26,7 +28,7 @@ public class pastScansScreen extends Screen {
     private final int gray = 0xFFAAAAAA;
     private final int black = 0xFF000000;
 
-    private static tableExplorer explorer;
+    private tableExplorer explorer; // persistant
 
     public pastScansScreen(Screen parent) {
         super(Component.literal("View Past Scans"));
@@ -68,7 +70,7 @@ public class pastScansScreen extends Screen {
     }
 
     private void renderTable(GuiGraphics context) {
-        explorer = new tableExplorer(this, context, tableX, tableY, tableWidth, tableHeight, gray, black);
+        explorer.setContext(context);
         explorer.createBackground();
         explorer.renderFileTable();
     }
@@ -99,11 +101,28 @@ public class pastScansScreen extends Screen {
 
         guiStartX = pxW(0.05f);
 		guiStartY = pxH(0.05f);
-
         widthForWidgets = this.width - (guiStartX * 2);
 
         createTopControlsAndCalcTable();
         createBottomButtons();
+
+        explorer = new tableExplorer(this, tableX, tableY, tableWidth, tableHeight, gray, black);
+
+        // docs are confusing
+        ScreenMouseEvents.afterMouseScroll(this).register((ScreenMouseEvents.AfterMouseScroll) this::onMouseScroll); // method reference
+    }
+
+    private boolean onMouseScroll(Screen screen, double mouseX, double mouseY, double deltaX, double deltaY, boolean consumed) {
+        if (screen == this && explorer != null) {
+            explorer.handleScroll(mouseX, mouseY, deltaY);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
     }
 
     @Override
