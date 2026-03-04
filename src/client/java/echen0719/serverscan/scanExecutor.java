@@ -112,7 +112,7 @@ public class scanExecutor {
 
 				// ./masscan x.x.x.x-y.y.y.y -p zzzzz --rate dddddd --exclude 255.255.255.255 --wait 5 --append-output -oL output
 				ProcessBuilder peanutButter = new ProcessBuilder(binary.getAbsolutePath(), ipChunk, "-p", portRanges,
-					"--rate", scanExecutor.rate, "--exclude", "255.255.255.255", "--wait", time, "-oL", chunkFile.getCanonicalPath()
+					"--rate", scanExecutor.rate, "--exclude", "255.255.255.255", "--wait", time, "-oJ", chunkFile.getCanonicalPath()
 				); // 7 second wait time is good, i think?
 
 				peanutButter.directory(gameDir); // paused.conf 

@@ -14,6 +14,12 @@ public class fileUtils {
         this.outputsFolder = new File(gameDir, "serverscan/outputs");
         ensureFolderExists();
     }
+
+    public File[] getChildFolders() {
+        File[] folders = null;
+        folders = outputsFolder.listFiles();
+        return folders;
+    }
     
     private void ensureFolderExists() {
         if (!outputsFolder.exists()) {

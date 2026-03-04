@@ -7,6 +7,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 import echen0719.serverscan.utils.guiUtils;
+import echen0719.serverscan.screens.tableExplorer;
 
 public class pastScansScreen extends Screen {
     private final Screen parent;
@@ -24,6 +25,8 @@ public class pastScansScreen extends Screen {
     private final int white = 0xFFFFFFFF;
     private final int gray = 0xFFAAAAAA;
     private final int black = 0xFF000000;
+
+    private static tableExplorer explorer;
 
     public pastScansScreen(Screen parent) {
         super(Component.literal("View Past Scans"));
@@ -65,10 +68,9 @@ public class pastScansScreen extends Screen {
     }
 
     private void renderTable(GuiGraphics context) {
-        context.fill(tableX - 1, tableY - 1, tableX + tableWidth + 1, tableY + tableHeight + 1, gray);
-        context.fill(tableX, tableY, tableX + tableWidth, tableY + tableHeight, black);
-
-        // will finish table logic
+        explorer = new tableExplorer(this, context, tableX, tableY, tableWidth, tableHeight, gray, black);
+        explorer.createBackground();
+        explorer.renderFileTable();
     }
 
     private void createBottomButtons() {
@@ -116,20 +118,18 @@ public class pastScansScreen extends Screen {
 
 /*
 
-                                      Past Scans (Table)
-[Search Bar] (edit box)                                                       [Refresh] (button)
+                                 Past Scans (Table)
+[Search Bar] (edit box) (button)                                [Refresh] (button)
 
-[  output.txt   |  1.0 MB  |  2/28/2026  |  Raw Preview  |  Formatted View  |  Delete File  ]
-[  output1.txt  |  6.7 MB  |  2/28/2026  |  Raw Preview  |  Formatted View  |  Delete File  ]
-[  output2.txt  |  6.9 MB  |  2/28/2026  |  Raw Preview  |  Formatted View  |  Delete File  ]
+[  output.txt   |  1.0 MB  |  2/28/2026  |  Format & View  |  Rename  |  Delete  ]
+[  output1.txt  |  6.7 MB  |  2/28/2026  |  Format & View  |  Rename  |  Delete  ]
+[  output2.txt  |  6.9 MB  |  2/28/2026  |  Format & View  |  Rename  |  Delete  ]
 
-[Open Directory] (button)                                                        [Back] (button)
+[Open Directory] (button)                                          [Back] (button)
 
 Search bar = search for file names, maybe I give size and date a sort?
 
-Raw Preview = separate screen of whatever masscan outputs (text view)
-
-Formatted View = separate screen of IPs and Ports formatted (to json?), displayed
+Formatted View = separate screen of IPs and Ports formatted, displayed
 in a multiselect view with the ability to add found servers to multiplayer list
 Features: Select all / deselect all, searching, add selected to multiplayer list
 
