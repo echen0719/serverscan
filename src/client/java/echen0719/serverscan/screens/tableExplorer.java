@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.fabricmc.loader.api.FabricLoader;
 
 import echen0719.serverscan.utils.fileUtils;
+import echen0719.serverscan.utils.guiUtils;
 
 public class tableExplorer {
     private fileUtils filesManager = new fileUtils(FabricLoader.getInstance().getGameDirectory());
@@ -20,8 +21,11 @@ public class tableExplorer {
     private int tableX, tableY, tableWidth, tableHeight;
     private static int borderColor, innerColor;
 
+    private Button formatAndViewButton, renameButton, deleteButton;
+
     private static int white = 0xFFFFFFFF;
     private static int black = 0xFF000000;
+    private static int gray = 0xFFAAAAAA;
     private static int darkGray = 0xFF404040;
     private static int lightGray = 0xFF808080;
     private static int scrollBarColor = 0xFF4A4A4A;
@@ -59,6 +63,13 @@ public class tableExplorer {
     public void renderFileTable() {
         File[] items = filesManager.getChildFolders();
 
+        int nameColWidth = (int)(tableWidth * 0.225f);
+        int sizeColWidth = (int)(tableWidth * 0.125f);
+        int dateColWidth = (int)(tableWidth * 0.15f);
+        int formatButtonWidth = (int)(tableWidth * 0.25f);
+        int renameButtonWidth = (int)(tableWidth * 0.12f);
+        int deleteButtonWidth = (int)(tableWidth * 0.12f);
+
         int totalRows = items.length;
         visibleRows = tableHeight / rowHeight;
         scrollMax = Math.max(0, totalRows - visibleRows);
@@ -77,16 +88,64 @@ public class tableExplorer {
 
                 File item = items[index];
                 String fileName = "";
+                int currentX = tableX;
 
                 if (item.isDirectory()) { // icons, i guess
                     fileName = "📁  " + items[index].getName();
+
+                    if (fileName.length() > 16) fileName = fileName.substring(0, 13) + "...";
+
+                    context.drawString(screen.getFont(), fileName, currentX + 5, rowY + 5, white);
                 }
                 else if (item.isFile()) {
                     fileName = "📄  " + items[index].getName();
+
+                    // name
+                    if (fileName.length() > 16) fileName = fileName.substring(0, 13) + "...";
+
+                    context.drawString(screen.getFont(), fileName, currentX + 5, rowY + 5, white);
+                    
+                    currentX += nameColWidth;
+                    context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
+
+                    // file size
+                    String fileSize = filesManager.formattedFileSize(item);
+
+                    context.drawString(screen.getFont(), fileSize, currentX + 5, rowY + 5, white);
+
+                    currentX += sizeColWidth;
+                    context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
+
+                    // file date
+                    String fileDate = filesManager.formattedDate(item);
+
+                    context.drawString(screen.getFont(), fileDate, currentX + 5, rowY + 5, white);
+
+                    currentX += dateColWidth;
+                    // context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
+
+                    // format & view
+                    formatAndViewButton = guiUtils.createButton(screen, "Format & View", currentX, rowY, formatButtonWidth, rowHeight, button -> {
+
+                    });
+                    currentX += formatButtonWidth;
+
+                    // rename
+                    renameButton = guiUtils.createButton(screen, "Rename", currentX, rowY, renameButtonWidth, rowHeight, button -> {
+
+                    });
+                    currentX += renameButtonWidth;
+
+                    // delete
+                    deleteButton = guiUtils.createButton(screen, "Delete", currentX, rowY, deleteButtonWidth, rowHeight, button -> {
+
+                    });
+
+                    // this is so weird but it works
+                    ((pastScansScreen) screen).addButton(formatAndViewButton);
+                    ((pastScansScreen) screen).addButton(renameButton);
+                    ((pastScansScreen) screen).addButton(deleteButton);
                 }
-                
-                if (fileName.length() > 25) fileName = fileName.substring(0, 22) + "...";
-                context.drawString(screen.getFont(), fileName, tableX + 5, rowY + 5, white);
             }
         }
 

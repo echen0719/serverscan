@@ -7,7 +7,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents; // fabric scroll
 import net.fabricmc.fabric.api.event.Event;
-
+import echen0719.serverscan.utils.fileUtils;
 import echen0719.serverscan.utils.guiUtils;
 import echen0719.serverscan.screens.tableExplorer;
 
@@ -75,6 +75,10 @@ public class pastScansScreen extends Screen {
         explorer.renderFileTable();
     }
 
+    public void addButton(Button button) {
+        this.addRenderableWidget(button);
+    }
+
     private void createBottomButtons() {
         int buttonY = tableY + tableHeight + 10;
 
@@ -126,10 +130,9 @@ public class pastScansScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
-    
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {    
         renderTable(context);
+        super.render(context, mouseX, mouseY, delta);
     }
 }
 

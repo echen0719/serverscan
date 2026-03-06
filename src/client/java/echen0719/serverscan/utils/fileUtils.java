@@ -5,6 +5,8 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class fileUtils {
     private static final String chunkExtension = ".tmp.chunk";
@@ -19,6 +21,35 @@ public class fileUtils {
         File[] folders = null;
         folders = outputsFolder.listFiles();
         return folders;
+    }
+
+    public String formattedFileSize(File file) {
+        if (file == null || !file.exists()) return "N/A";
+        long bytes = file.length();
+
+        if (bytes < 1024) {
+            return bytes + " B";
+        }
+
+        else if (bytes < 1048576) {
+            return String.format("%.1f KB", bytes / 1024.0);
+        }
+
+        else if (bytes < 1073741824) {
+            return String.format("%.1f MB", bytes / 1048576.0);
+        }
+
+        else {
+            return String.format("%.1f GB", bytes / 1073741824.0);
+        } 
+        // 🤨 why would you need TB?
+    }
+
+    public String formattedDate(File file) {
+        if (file == null || !file.exists()) return "N/A";
+
+        SimpleDateFormat formatter = new SimpleDateFormat("M/d/yyyy");
+        return formatter.format(new Date(file.lastModified()));
     }
     
     private void ensureFolderExists() {
