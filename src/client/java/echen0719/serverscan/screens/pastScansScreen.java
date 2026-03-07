@@ -4,16 +4,16 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Util;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents; // fabric scroll
-import net.fabricmc.fabric.api.event.Event;
+import net.fabricmc.loader.api.FabricLoader;
+
 import echen0719.serverscan.utils.fileUtils;
 import echen0719.serverscan.utils.guiUtils;
-import echen0719.serverscan.screens.tableExplorer;
 
 public class pastScansScreen extends Screen {
-    private final Screen parent;
-
     private EditBox searchBox;
     private Button searchSubmitButton, openDirButton, refreshButton, backButton;
 
@@ -28,6 +28,8 @@ public class pastScansScreen extends Screen {
     private final int gray = 0xFFAAAAAA;
     private final int black = 0xFF000000;
 
+    private final Screen parent;
+    private fileUtils filesManager = new fileUtils(FabricLoader.getInstance().getGameDirectory());
     private tableExplorer explorer; // persistant
 
     public pastScansScreen(Screen parent) {
@@ -64,9 +66,28 @@ public class pastScansScreen extends Screen {
 
         refreshButton = guiUtils.createButton(this, "Refresh", pxW(0.95f) - refreshButtonWidth, guiStartY, refreshButtonWidth, widgetHeight,
         button -> {
-            // refresh logic
+            explorer.refresh();
         });
         this.addRenderableWidget(refreshButton);
+    }
+
+    private void createBottomButtons() {
+        int buttonY = tableY + tableHeight + 10;
+
+        int openDirButtonWidth = (int)(widthForWidgets * 0.25f);
+        int backButtonWidth = (int)(widthForWidgets * 0.2f);
+
+        openDirButton = guiUtils.createButton(this, "Open Directory", guiStartX, buttonY, openDirButtonWidth, widgetHeight,
+        button -> {
+            Util.getPlatform().openFile(filesManager.getOutputsFolder()); // got from resource pack screen
+        });
+        this.addRenderableWidget(openDirButton);
+
+        backButton = guiUtils.createButton(this, "Back", guiStartX + widthForWidgets - backButtonWidth, buttonY, backButtonWidth, widgetHeight,
+        button -> {
+            this.minecraft.setScreen(parent);
+        });
+        this.addRenderableWidget(backButton);
     }
 
     private void renderTable(GuiGraphics context) {
@@ -79,23 +100,31 @@ public class pastScansScreen extends Screen {
         this.addRenderableWidget(button);
     }
 
-    private void createBottomButtons() {
-        int buttonY = tableY + tableHeight + 10;
+    public void removeButton(Button button) {
+        this.removeWidget(button);
+    }
 
-        int openDirButtonWidth = (int)(widthForWidgets * 0.25f);
-        int backButtonWidth = (int)(widthForWidgets * 0.2f);
+    private boolean onMouseScroll(Screen screen, double mouseX, double mouseY, double deltaX, double deltaY, boolean consumed) {
+        if (explorer != null) {
+            explorer.handleScroll(mouseX, mouseY, deltaY);
+            return true;
+        }
+        return false;
+    }
 
-        openDirButton = guiUtils.createButton(this, "Open Directory", guiStartX, buttonY, openDirButtonWidth, widgetHeight,
-        button -> {
-            // open dir logic
-        });
-        this.addRenderableWidget(openDirButton);
+    // Minecraft's MouseButtonEvent
+    private boolean onMouseClick(Screen screen, MouseButtonEvent event, boolean consumed) {
+        if (explorer != null && event.button() == 0) {
+            return explorer.handleMouseClick(event.x(), event.y()) || consumed; // if else one-liner
+        }
+        return consumed;
+    }
 
-        backButton = guiUtils.createButton(this, "Back", guiStartX + widthForWidgets - backButtonWidth, buttonY, backButtonWidth, widgetHeight,
-        button -> {
-            this.minecraft.setScreen(parent);
-        });
-        this.addRenderableWidget(backButton);
+    private boolean onMouseRelease(Screen screen, MouseButtonEvent event, boolean consumed) {
+        if (explorer != null && event.button() == 0) {
+            explorer.handleMouseRelease();
+        }
+        return consumed;
     }
 
     @Override
@@ -114,24 +143,18 @@ public class pastScansScreen extends Screen {
 
         // docs are confusing
         ScreenMouseEvents.afterMouseScroll(this).register((ScreenMouseEvents.AfterMouseScroll) this::onMouseScroll); // method reference
-    }
-
-    private boolean onMouseScroll(Screen screen, double mouseX, double mouseY, double deltaX, double deltaY, boolean consumed) {
-        if (screen == this && explorer != null) {
-            explorer.handleScroll(mouseX, mouseY, deltaY);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public void removed() {
-        super.removed();
+        ScreenMouseEvents.afterMouseClick(this).register((ScreenMouseEvents.AfterMouseClick) this::onMouseClick);
+        ScreenMouseEvents.afterMouseRelease(this).register((ScreenMouseEvents.AfterMouseRelease) this::onMouseRelease);
     }
 
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {    
         renderTable(context);
+
+        if (explorer != null) {
+            explorer.handleMouseDrag(mouseY);
+        }
+
         super.render(context, mouseX, mouseY, delta);
     }
 }
@@ -140,12 +163,12 @@ public class pastScansScreen extends Screen {
 
 /*
 
-                                 Past Scans (Table)
-[Search Bar] (edit box) (button)                                [Refresh] (button)
+                                Past Scans (Table)
+[Search Bar] (edit box) (button)                               [Refresh] (button)
 
-[  output.txt   |  1.0 MB  |  2/28/2026  |  Format & View  |  Rename  |  Delete  ]
-[  output1.txt  |  6.7 MB  |  2/28/2026  |  Format & View  |  Rename  |  Delete  ]
-[  output2.txt  |  6.9 MB  |  2/28/2026  |  Format & View  |  Rename  |  Delete  ]
+[  output.txt   |  1.0 MB  |  2/28/2026  |  View Servers  |  Rename  |  Delete  ]
+[  output1.txt  |  6.7 MB  |  2/28/2026  |  View Servers  |  Rename  |  Delete  ]
+[  output2.txt  |  6.9 MB  |  2/28/2026  |  View Servers  |  Rename  |  Delete  ]
 
 [Open Directory] (button)                                          [Back] (button)
 
