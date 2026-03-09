@@ -6,9 +6,9 @@ import java.util.List;
 
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.fabricmc.loader.api.FabricLoader;
-
 import echen0719.serverscan.utils.fileUtils;
 import echen0719.serverscan.utils.guiUtils;
 
@@ -60,8 +60,8 @@ public class tableExplorer {
     // used a bunch of ideas but made them simpler and for my purposes
 
     public void renderFileTable() {
-        for (Button btn : activeButtons) {
-            ((pastScansScreen) screen).removeButton(btn);
+        for (Button button : activeButtons) {
+            ((pastScansScreen) screen).removeButton(button);
         }
         activeButtons.clear();
 
@@ -81,7 +81,7 @@ public class tableExplorer {
             int rowY = tableY + (i * rowHeight);
             int index = scrollPos + i;
 
-            if (index < 0 && index >= totalRows) continue; 
+            if (index < 0 || index >= totalRows) continue; 
                 
             if (i % 2 == 0) {
                 context.fill(tableX + 1, rowY, tableX + tableWidth - scrollBarWidth - 1, rowY + rowHeight, darkGray);
@@ -122,19 +122,19 @@ public class tableExplorer {
 
                 // format & view
                 Button formatAndViewButton = guiUtils.createButton(screen, "View Servers", currentX, rowY, formatButtonWidth, rowHeight, button -> {
-
+                    
                 });
                 currentX += formatButtonWidth;
 
                 // rename
                 Button renameButton = guiUtils.createButton(screen, "Rename", currentX, rowY, renameButtonWidth, rowHeight, button -> {
-
+                    Minecraft.getInstance().setScreen(new confirmationScreen(screen, item, "RENAME"));
                 });
                 currentX += renameButtonWidth;
 
                 // delete
                 Button deleteButton = guiUtils.createButton(screen, "Delete", currentX, rowY, deleteButtonWidth, rowHeight, button -> {
-
+                    Minecraft.getInstance().setScreen(new confirmationScreen(screen, item, "DELETE"));
                 });
 
                 activeButtons.add(formatAndViewButton);

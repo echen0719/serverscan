@@ -105,23 +105,20 @@ public class pastScansScreen extends Screen {
     }
 
     private boolean onMouseScroll(Screen screen, double mouseX, double mouseY, double deltaX, double deltaY, boolean consumed) {
-        if (explorer != null) {
-            explorer.handleScroll(mouseX, mouseY, deltaY);
-            return true;
-        }
-        return false;
+        explorer.handleScroll(mouseX, mouseY, deltaY);
+        return true;
     }
 
     // Minecraft's MouseButtonEvent
     private boolean onMouseClick(Screen screen, MouseButtonEvent event, boolean consumed) {
-        if (explorer != null && event.button() == 0) {
+        if (event.button() == 0) {
             return explorer.handleMouseClick(event.x(), event.y()) || consumed; // if else one-liner
         }
         return consumed;
     }
 
     private boolean onMouseRelease(Screen screen, MouseButtonEvent event, boolean consumed) {
-        if (explorer != null && event.button() == 0) {
+        if (event.button() == 0) {
             explorer.handleMouseRelease();
         }
         return consumed;
@@ -150,10 +147,7 @@ public class pastScansScreen extends Screen {
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {    
         renderTable(context);
-
-        if (explorer != null) {
-            explorer.handleMouseDrag(mouseY);
-        }
+        explorer.handleMouseDrag(mouseY);
 
         super.render(context, mouseX, mouseY, delta);
     }
