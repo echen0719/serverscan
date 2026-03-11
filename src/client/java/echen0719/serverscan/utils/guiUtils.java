@@ -6,14 +6,14 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 
 public class guiUtils {
-    public static EditBox createInputBox(Screen screen, int x, int y, int width, int widgetHeight, String hint) {
-        EditBox box = new EditBox(screen.getFont(), x, y, width, widgetHeight, Component.literal(""));
+    public static EditBox createInputBox(Screen screen, int x, int y, int width, int height, String hint) {
+        EditBox box = new EditBox(screen.getFont(), x, y, width, height, Component.literal(""));
         box.setHint(Component.literal(hint));
         return box;
     }
 
-    public static Button createButton(Screen screen, String label, int x, int y, int width, int widgetHeight, Button.OnPress action) {
-        Button button = Button.builder(Component.literal(label), action).bounds(x, y, width, widgetHeight).build();
+    public static Button createButton(Screen screen, String label, int x, int y, int width, int height, Button.OnPress action) {
+        Button button = Button.builder(Component.literal(label), action).bounds(x, y, width, height).build();
         return button;
     }
 }
