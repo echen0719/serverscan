@@ -18,6 +18,9 @@ public class confirmationScreen extends Screen {
     private EditBox renameInputBox;
     private Button cancelButton, confirmButton;
 
+    private int padding = 16;
+    private int widgetHeight = 20;
+
     private final int white = 0xFFFFFFFF;
     private final int gray = 0xFFAAAAAA;
     private final int black = 0xFF000000;
@@ -34,6 +37,8 @@ public class confirmationScreen extends Screen {
     public confirmationScreen(Screen parent, File targetFile, String type) {
         super(Component.literal("View Past Scans"));
         this.parent = parent;
+        this.targetFile = targetFile;
+        this.type = type;
 
         if (type.equals("RENAME")) {
             this.message = "Enter new file name for \"" + targetFile.getName() + "\":";
@@ -47,30 +52,63 @@ public class confirmationScreen extends Screen {
     }
 
     private void createRenameDialog() {
-        int widthCenter = this.width / 2;
-        int heightCenter = this.height / 2;
+        int centerX = this.width / 2;
+        int centerY = this.height / 2;
+        int buttonWidth = 100;
+        int totalWidth = buttonWidth * 2 + padding;
 
-        newNameBox = guiUtils.createInputBox(parent, widthCenter, heightCenter - 50, 100, 20, "Enter a new file name...");
-        this.addRenderableOnly(newNameBox);
+        renameInputBox = guiUtils.createInputBox(this, centerX - totalWidth / 2, centerY - padding, totalWidth, widgetHeight, "Enter a new file name...");
+        this.addRenderableWidget(renameInputBox);
 
-        cancelButton = guiUtils.createButton(parent, "Cancel", widthCenter - 50, heightCenter, 100, 20, button -> {
-
+        cancelButton = guiUtils.createButton(this, "Cancel", centerX - totalWidth / 2, centerY + padding, buttonWidth, widgetHeight, button -> {
+            this.minecraft.setScreen(parent);
         });
-        this.addRenderableOnly(cancelButton);
+        this.addRenderableWidget(cancelButton);
+
+        confirmButton = guiUtils.createButton(this, "Confirm", centerX + padding / 2, centerY + padding, buttonWidth, widgetHeight, button -> {
+            this.minecraft.setScreen(parent);
+        });
+        this.addRenderableWidget(confirmButton);
     }
 
     private void createDeleteDialog() {
+        int centerX = this.width / 2;
+        int centerY = this.height / 2;
+        int buttonWidth = 100;
+        int totalWidth = buttonWidth * 2 + padding;
 
+        cancelButton = guiUtils.createButton(this, "Cancel", centerX - totalWidth / 2, centerY, buttonWidth, widgetHeight, button -> {
+            this.minecraft.setScreen(parent);
+        });
+        this.addRenderableWidget(cancelButton);
+
+        confirmButton = guiUtils.createButton(this, "Confirm", centerX + padding / 2, centerY, buttonWidth, widgetHeight, button -> {
+            this.minecraft.setScreen(parent);
+        });
+        this.addRenderableWidget(confirmButton);
     }
 
     @Override
     public void init() {
         super.init();
         this.clearWidgets();
+        if (type.equals("RENAME")) {
+            createRenameDialog();
+        }
+        else if (type.equals("DELETE")) {
+            createDeleteDialog();
+        }
     }
 
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) { 
         super.render(context, mouseX, mouseY, delta);
+
+        if (type.equals("RENAME")) {
+            context.drawString(this.font, Component.literal(message), renameInputBox.getX(), renameInputBox.getY() - padding, white);
+        }
+        else if (type.equals("DELETE")) {
+            context.drawString(this.font, Component.literal(message), cancelButton.getX(), cancelButton.getY() - padding, white);
+        }
     }
 }
