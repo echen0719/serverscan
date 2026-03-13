@@ -15,24 +15,25 @@ import echen0719.serverscan.utils.fileUtils;
 import echen0719.serverscan.utils.guiUtils;
 
 public class confirmationScreen extends Screen {
+    private final Screen parent;
+
+    // gui components
     private EditBox renameInputBox;
     private Button cancelButton, confirmButton;
 
+    // layouts constants
     private int padding = 16;
     private int widgetHeight = 20;
 
+    // colors
     private final int white = 0xFFFFFFFF;
     private final int gray = 0xFFAAAAAA;
     private final int black = 0xFF000000;
 
+    // parameter values
     private File targetFile;
     private String message;
     private String type;
-
-    private final Screen parent;
-    private GuiGraphics context;
-    private fileUtils filesManager = new fileUtils(FabricLoader.getInstance().getGameDirectory());
-    private File[] items = filesManager.getChildFolders();
 
     public confirmationScreen(Screen parent, File targetFile, String type) {
         super(Component.literal("View Past Scans"));
@@ -66,6 +67,20 @@ public class confirmationScreen extends Screen {
         this.addRenderableWidget(cancelButton);
 
         confirmButton = guiUtils.createButton(this, "Confirm", centerX + padding / 2, centerY + padding, buttonWidth, widgetHeight, button -> {
+            String newFileName = renameInputBox.getValue().trim();
+
+            if (newFileName.isEmpty()) {
+                return;
+            }
+
+            if (targetFile.exists()) {
+                boolean success = targetFile.renameTo(new File(targetFile.getParentFile(), newFileName));
+
+                if (!success) {
+                    // handle errors to screen
+                }
+            }
+            
             this.minecraft.setScreen(parent);
         });
         this.addRenderableWidget(confirmButton);
@@ -83,6 +98,14 @@ public class confirmationScreen extends Screen {
         this.addRenderableWidget(cancelButton);
 
         confirmButton = guiUtils.createButton(this, "Confirm", centerX + padding / 2, centerY, buttonWidth, widgetHeight, button -> {
+            if (targetFile.exists()) {
+                boolean success = targetFile.delete();
+
+                if (!success) {
+                    // handle errors to screen
+                }
+            }
+
             this.minecraft.setScreen(parent);
         });
         this.addRenderableWidget(confirmButton);

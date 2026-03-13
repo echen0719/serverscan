@@ -14,21 +14,27 @@ import echen0719.serverscan.utils.fileUtils;
 import echen0719.serverscan.utils.guiUtils;
 
 public class pastScansScreen extends Screen {
+    private final Screen parent;
+
+    // gui components
     private EditBox searchBox;
     private Button searchSubmitButton, openDirButton, refreshButton, backButton;
 
+    // values calculated by init
     private int guiStartX, guiStartY;
     private int tableX, tableY, tableWidth, tableHeight;
     private int widthForWidgets;
 
+    // layout constants
     private int padding = 16;
     private int widgetHeight = 20;
 
+    // colors
     private final int white = 0xFFFFFFFF;
     private final int gray = 0xFFAAAAAA;
     private final int black = 0xFF000000;
 
-    private final Screen parent;
+    // utils
     private fileUtils filesManager = new fileUtils(FabricLoader.getInstance().getGameDirectory());
     private tableExplorer explorer; // persistant
 
@@ -136,7 +142,7 @@ public class pastScansScreen extends Screen {
         createTopControlsAndCalcTable();
         createBottomButtons();
 
-        explorer = new tableExplorer(this, tableX, tableY, tableWidth, tableHeight, gray, black);
+        explorer = new tableExplorer(this, tableX, tableY, tableWidth, tableHeight);
 
         // docs are confusing
         ScreenMouseEvents.afterMouseScroll(this).register((ScreenMouseEvents.AfterMouseScroll) this::onMouseScroll); // method reference

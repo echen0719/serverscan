@@ -13,9 +13,12 @@ import echen0719.serverscan.utils.fileUtils;
 import echen0719.serverscan.utils.guiUtils;
 
 public class tableExplorer {
-    private int tableX, tableY, tableWidth, tableHeight;
-    private int borderColor, innerColor;
+    private Screen parent;
 
+    // values calculated by init
+    private int tableX, tableY, tableWidth, tableHeight;
+
+    // colors
     private static int white = 0xFFFFFFFF;
     private static int black = 0xFF000000;
     private static int gray = 0xFFAAAAAA;
@@ -24,9 +27,11 @@ public class tableExplorer {
     private static int scrollBarColor = 0xFF4A4A4A;
     private static int scrollBarHoverColor = 0xFF8A8A8A;
 
+    // layout constants
     private static int rowHeight = 20;
     private static int scrollBarWidth = 5;
 
+    // scrolling vars
     private int scrollPos = 0;
     private int scrollMax = 0;
     private int visibleRows = 0;
@@ -35,16 +40,14 @@ public class tableExplorer {
     // making logic for clearing button (for preventing overlap) easier
     private List<Button> activeButtons = new ArrayList<Button>();
 
-    private Screen screen;
     private GuiGraphics context;
     private fileUtils filesManager = new fileUtils(FabricLoader.getInstance().getGameDirectory());
     private File[] items = filesManager.getChildFolders();
 
-    public tableExplorer(Screen screen, int tableX, int tableY, int tableWidth, int tableHeight, int borderColor, int innerColor) {
-        this.screen = screen;
+    public tableExplorer(Screen screen, int tableX, int tableY, int tableWidth, int tableHeight) {
+        this.parent = screen;
         this.tableX = tableX; this.tableY = tableY;
         this.tableWidth = tableWidth; this.tableHeight = tableHeight;
-        this.borderColor = borderColor; this.innerColor = innerColor;
     }
 
     public void setContext(GuiGraphics context) {
@@ -52,8 +55,8 @@ public class tableExplorer {
     }
     
     public void createBackground() {
-        context.fill(tableX - 1, tableY - 1, tableX + tableWidth + 1, tableY + tableHeight + 1, borderColor);
-        context.fill(tableX, tableY, tableX + tableWidth, tableY + tableHeight, innerColor);
+        context.fill(tableX - 1, tableY - 1, tableX + tableWidth + 1, tableY + tableHeight + 1, gray);
+        context.fill(tableX, tableY, tableX + tableWidth, tableY + tableHeight, black);
     }
 
     // https://github.com/GotoLink/SkillAPI/blob/master/skillapi/client/GuiKnownSkills.java
@@ -61,7 +64,7 @@ public class tableExplorer {
 
     public void renderFileTable() {
         for (Button button : activeButtons) {
-            ((pastScansScreen) screen).removeButton(button);
+            ((pastScansScreen) parent).removeButton(button);
         }
         activeButtons.clear();
 
@@ -103,38 +106,38 @@ public class tableExplorer {
                 if (fileName.length() > 16) fileName = fileName.substring(0, 13) + "...";
             }
             
-            context.drawString(screen.getFont(), fileName, currentX + 5, rowY + 5, white);
+            context.drawString(parent.getFont(), fileName, currentX + 5, rowY + 5, white);
                    
             if(item.isFile()) {
                 currentX += nameColWidth;
                 context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
                 // file size
-                context.drawCenteredString(screen.getFont(), filesManager.formattedFileSize(item), currentX + sizeColWidth / 2, rowY + 5, white);
+                context.drawCenteredString(parent.getFont(), filesManager.formattedFileSize(item), currentX + sizeColWidth / 2, rowY + 5, white);
 
                 currentX += sizeColWidth;
                 context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
                 // file date
-                context.drawCenteredString(screen.getFont(), filesManager.formattedDate(item), currentX + dateColWidth / 2, rowY + 5, white);
+                context.drawCenteredString(parent.getFont(), filesManager.formattedDate(item), currentX + dateColWidth / 2, rowY + 5, white);
 
                 currentX += dateColWidth;
 
                 // format & view
-                Button formatAndViewButton = guiUtils.createButton(screen, "View Servers", currentX, rowY, formatButtonWidth, rowHeight, button -> {
+                Button formatAndViewButton = guiUtils.createButton(parent, "View Servers", currentX, rowY, formatButtonWidth, rowHeight, button -> {
                     
                 });
                 currentX += formatButtonWidth;
 
                 // rename
-                Button renameButton = guiUtils.createButton(screen, "Rename", currentX, rowY, renameButtonWidth, rowHeight, button -> {
-                    Minecraft.getInstance().setScreen(new confirmationScreen(screen, item, "RENAME"));
+                Button renameButton = guiUtils.createButton(parent, "Rename", currentX, rowY, renameButtonWidth, rowHeight, button -> {
+                    Minecraft.getInstance().setScreen(new confirmationScreen(parent, item, "RENAME"));
                 });
                 currentX += renameButtonWidth;
 
                 // delete
-                Button deleteButton = guiUtils.createButton(screen, "Delete", currentX, rowY, deleteButtonWidth, rowHeight, button -> {
-                    Minecraft.getInstance().setScreen(new confirmationScreen(screen, item, "DELETE"));
+                Button deleteButton = guiUtils.createButton(parent, "Delete", currentX, rowY, deleteButtonWidth, rowHeight, button -> {
+                    Minecraft.getInstance().setScreen(new confirmationScreen(parent, item, "DELETE"));
                 });
 
                 activeButtons.add(formatAndViewButton);
@@ -142,9 +145,9 @@ public class tableExplorer {
                 activeButtons.add(deleteButton);
 
                 // this is so weird but it works
-                ((pastScansScreen) screen).addButton(formatAndViewButton);
-                ((pastScansScreen) screen).addButton(renameButton);
-                ((pastScansScreen) screen).addButton(deleteButton);
+                ((pastScansScreen) parent).addButton(formatAndViewButton);
+                ((pastScansScreen) parent).addButton(renameButton);
+                ((pastScansScreen) parent).addButton(deleteButton);
             }
         }
 
