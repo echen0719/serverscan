@@ -2,7 +2,6 @@ package echen0719.serverscan.screens;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
@@ -41,7 +40,7 @@ public class tableExplorer {
     private boolean isScrollDragging = false;
 
     // making logic for clearing button (for preventing overlap) easier
-    private List<Button> activeButtons = new ArrayList<Button>();
+    private ArrayList<Button> activeButtons = new ArrayList<Button>();
 
     private GuiGraphics context;
     private fileUtils filesManager = new fileUtils(FabricLoader.getInstance().getGameDirectory());
@@ -70,7 +69,7 @@ public class tableExplorer {
     // https://github.com/GotoLink/SkillAPI/blob/master/skillapi/client/GuiKnownSkills.java
     // used a bunch of ideas but made them simpler and for my purposes
 
-    public void renderFileTable() {
+    public void renderFileTable(double mouseX, double mouseY) {
         for (Button button : activeButtons) {
             ((pastScansScreen) parent).removeButton(button);
         }
@@ -136,7 +135,7 @@ public class tableExplorer {
 
             // format & view
             Button formatAndViewButton = guiUtils.createButton(parent, "View Servers", currentX, rowY, formatButtonWidth, rowHeight, button -> {
-                
+                Minecraft.getInstance().setScreen(new viewServerScreen(parent, item));
             });
             currentX += formatButtonWidth;
 
@@ -161,7 +160,7 @@ public class tableExplorer {
             ((pastScansScreen) parent).addButton(deleteButton);
         }
 
-        renderScrollBar();
+        renderScrollBar(mouseX, mouseY);
     }
 
     private int[] calcScrollBarAttr() {
@@ -183,13 +182,18 @@ public class tableExplorer {
         return new int[] {scrollBarX, scrollBarY, scrollBarHeight};
     }
 
-    private void renderScrollBar() {
+    private void renderScrollBar(double mouseX, double mouseY) {
         int[] scrollBarInfo = calcScrollBarAttr();
         if (scrollBarInfo == null) return;
 
         int scrollBarX = scrollBarInfo[0]; int scrollBarY = scrollBarInfo[1]; int scrollBarHeight = scrollBarInfo[2];
 
-        context.fill(scrollBarX, scrollBarY, scrollBarX + scrollBarWidth, scrollBarY + scrollBarHeight, scrollBarColor);
+        int color = scrollBarColor;
+        if (isMouseOverScrollbar(mouseX, mouseY)) {
+            color = scrollBarHoverColor;
+        }
+
+        context.fill(scrollBarX, scrollBarY, scrollBarX + scrollBarWidth, scrollBarY + scrollBarHeight, color);
     }
 
     private boolean isMouseOverScrollbar(double mouseX, double mouseY) {
