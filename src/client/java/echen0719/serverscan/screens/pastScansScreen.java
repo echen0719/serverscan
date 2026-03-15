@@ -5,10 +5,13 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents; // fabric scroll
 import net.fabricmc.loader.api.FabricLoader;
+
+import org.lwjgl.glfw.GLFW;
 
 import echen0719.serverscan.utils.fileUtils;
 import echen0719.serverscan.utils.guiUtils;
@@ -66,13 +69,16 @@ public class pastScansScreen extends Screen {
 
         searchSubmitButton = guiUtils.createButton(this, "Search", searchBox.getX() + searchBox.getWidth() + padding, guiStartY, searchSubmitButtonWidth, widgetHeight,
         button -> {
-            // search logic
+            String searchTerm = searchBox.getValue().trim();
+            explorer.setSearchTerm(searchTerm);
         });
         this.addRenderableWidget(searchSubmitButton);
 
         refreshButton = guiUtils.createButton(this, "Refresh", pxW(0.95f) - refreshButtonWidth, guiStartY, refreshButtonWidth, widgetHeight,
         button -> {
             explorer.refresh();
+            explorer.setSearchTerm(""); // resest
+            searchBox.setValue("");
         });
         this.addRenderableWidget(refreshButton);
     }
@@ -108,6 +114,17 @@ public class pastScansScreen extends Screen {
 
     public void removeButton(Button button) {
         this.removeWidget(button);
+    }
+
+    @Override // really have to read mappings
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        if (searchBox.isFocused() && (keyCode == GLFW.GLFW_KEY_ENTER)) {
+            String searchTerm = searchBox.getValue().trim();
+            explorer.setSearchTerm(searchTerm);
+            return true; // takes in enter key for search box
+        }
+        return super.keyPressed(event);
     }
 
     private boolean onMouseScroll(Screen screen, double mouseX, double mouseY, double deltaX, double deltaY, boolean consumed) {

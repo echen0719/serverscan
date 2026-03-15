@@ -15,6 +15,9 @@ import echen0719.serverscan.utils.guiUtils;
 public class tableExplorer {
     private Screen parent;
 
+    // values
+    private String searchTerm = "";
+
     // values calculated by init
     private int tableX, tableY, tableWidth, tableHeight;
 
@@ -53,6 +56,11 @@ public class tableExplorer {
     public void setContext(GuiGraphics context) {
         this.context = context;
     }
+
+    public void setSearchTerm(String searchTerm) {
+        this.searchTerm = searchTerm.toLowerCase();
+        this.scrollPos = 0;
+    }
     
     public void createBackground() {
         context.fill(tableX - 1, tableY - 1, tableX + tableWidth + 1, tableY + tableHeight + 1, gray);
@@ -76,7 +84,16 @@ public class tableExplorer {
         int renameButtonWidth = (int)(usableWidth * 0.15f);
         int deleteButtonWidth = (int)(usableWidth * 0.15f);
 
-        int totalRows = items.length;
+        ArrayList<File> displayedItems = new ArrayList<File>();
+        for (File item : items) {
+            // if user searches for phrase, this checks and skips over files without it
+            if (!searchTerm.isEmpty() && !item.getName().toLowerCase().contains(searchTerm)) { 
+                continue;
+            }
+            displayedItems.add(item);
+        }
+
+        int totalRows = displayedItems.size();
         visibleRows = tableHeight / rowHeight;
         scrollMax = Math.max(0, totalRows - visibleRows);
 
@@ -93,11 +110,12 @@ public class tableExplorer {
                 context.fill(tableX + 1, rowY, tableX + tableWidth - scrollBarWidth - 1, rowY + rowHeight, lightGray);
             }
 
-            File item = items[index];
+            File item = displayedItems.get(index);
+
             String fileName = "";
             int currentX = tableX;
                    
-            fileName = "📄  " + items[index].getName();
+            fileName = "📄  " + displayedItems.get(index).getName();
             if (fileName.length() > 16) fileName = fileName.substring(0, 13) + "...";
         
             context.drawString(parent.getFont(), fileName, currentX + 5, rowY + 5, white);
@@ -223,5 +241,6 @@ public class tableExplorer {
 
     public void refresh() {
         this.items = filesManager.getChildFiles();
+        this.scrollPos = 0;
     }
 }
