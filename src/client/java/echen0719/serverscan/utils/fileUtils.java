@@ -1,5 +1,7 @@
 package echen0719.serverscan.utils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.io.File;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -17,10 +19,14 @@ public class fileUtils {
         ensureFolderExists();
     }
 
-    public File[] getChildFolders() {
-        File[] folders = null;
-        folders = outputsFolder.listFiles();
-        return folders;
+    public File[] getChildFiles() {
+        ArrayList<File> files = new ArrayList<File>();
+        for (File file : outputsFolder.listFiles()) {
+            if (file.isFile()) {
+                files.add(file);
+            }
+        }; // prefer to work arrays instead
+        return files.toArray(new File[files.size()]);
     }
 
     public String formattedFileSize(File file) {

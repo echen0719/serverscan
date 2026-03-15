@@ -158,33 +158,3 @@ public class pastScansScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
     }
 }
-
-// ok...so this is what it should look like but i am lazy right now
-
-/*
-
-                                Past Scans (Table)
-[Search Bar] (edit box) (button)                               [Refresh] (button)
-
-[  output.txt   |  1.0 MB  |  2/28/2026  |  View Servers  |  Rename  |  Delete  ]
-[  output1.txt  |  6.7 MB  |  2/28/2026  |  View Servers  |  Rename  |  Delete  ]
-[  output2.txt  |  6.9 MB  |  2/28/2026  |  View Servers  |  Rename  |  Delete  ]
-
-[Open Directory] (button)                                          [Back] (button)
-
-Search bar = search for file names, maybe I give size and date a sort?
-
-Formatted View = separate screen of IPs and Ports formatted, displayed
-in a multiselect view with the ability to add found servers to multiplayer list
-Features: Select all / deselect all, searching, add selected to multiplayer list
-
-Open Directory = opens the directory of .minecraft/serverscan/outputs in system file explorer
-
-Delete file = just deletes the output files (and asks to delete formatted one as well)
-Features: With confimration, if a formatted file appears with same name, also ask to delete that
-
-Refresh button = recreate the screen if new data is moved or new scan is finished
-
-If file in use, warn user, and let them continue if they choose to do so
-
-*/

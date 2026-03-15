@@ -42,7 +42,7 @@ public class tableExplorer {
 
     private GuiGraphics context;
     private fileUtils filesManager = new fileUtils(FabricLoader.getInstance().getGameDirectory());
-    private File[] items = filesManager.getChildFolders();
+    private File[] items = filesManager.getChildFiles();
 
     public tableExplorer(Screen screen, int tableX, int tableY, int tableWidth, int tableHeight) {
         this.parent = screen;
@@ -96,59 +96,51 @@ public class tableExplorer {
             File item = items[index];
             String fileName = "";
             int currentX = tableX;
-
-            if (item.isDirectory()) { // icons, i guess
-                fileName = "📂  " + items[index].getName();
-                if (fileName.length() > 25) fileName = fileName.substring(0, 22) + "...";
-            }
-            else {
-                fileName = "📄  " + items[index].getName();
-                if (fileName.length() > 16) fileName = fileName.substring(0, 13) + "...";
-            }
-            
-            context.drawString(parent.getFont(), fileName, currentX + 5, rowY + 5, white);
                    
-            if(item.isFile()) {
-                currentX += nameColWidth;
-                context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
+            fileName = "📄  " + items[index].getName();
+            if (fileName.length() > 16) fileName = fileName.substring(0, 13) + "...";
+        
+            context.drawString(parent.getFont(), fileName, currentX + 5, rowY + 5, white);
 
-                // file size
-                context.drawCenteredString(parent.getFont(), filesManager.formattedFileSize(item), currentX + sizeColWidth / 2, rowY + 5, white);
+            currentX += nameColWidth;
+            context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
-                currentX += sizeColWidth;
-                context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
+            // file size
+            context.drawCenteredString(parent.getFont(), filesManager.formattedFileSize(item), currentX + sizeColWidth / 2, rowY + 5, white);
 
-                // file date
-                context.drawCenteredString(parent.getFont(), filesManager.formattedDate(item), currentX + dateColWidth / 2, rowY + 5, white);
+            currentX += sizeColWidth;
+            context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
-                currentX += dateColWidth;
+            // file date
+            context.drawCenteredString(parent.getFont(), filesManager.formattedDate(item), currentX + dateColWidth / 2, rowY + 5, white);
 
-                // format & view
-                Button formatAndViewButton = guiUtils.createButton(parent, "View Servers", currentX, rowY, formatButtonWidth, rowHeight, button -> {
-                    
-                });
-                currentX += formatButtonWidth;
+            currentX += dateColWidth;
 
-                // rename
-                Button renameButton = guiUtils.createButton(parent, "Rename", currentX, rowY, renameButtonWidth, rowHeight, button -> {
-                    Minecraft.getInstance().setScreen(new confirmationScreen(parent, item, "RENAME"));
-                });
-                currentX += renameButtonWidth;
+            // format & view
+            Button formatAndViewButton = guiUtils.createButton(parent, "View Servers", currentX, rowY, formatButtonWidth, rowHeight, button -> {
+                
+            });
+            currentX += formatButtonWidth;
 
-                // delete
-                Button deleteButton = guiUtils.createButton(parent, "Delete", currentX, rowY, deleteButtonWidth, rowHeight, button -> {
-                    Minecraft.getInstance().setScreen(new confirmationScreen(parent, item, "DELETE"));
-                });
+            // rename
+            Button renameButton = guiUtils.createButton(parent, "Rename", currentX, rowY, renameButtonWidth, rowHeight, button -> {
+                Minecraft.getInstance().setScreen(new confirmationScreen(parent, item, "RENAME"));
+            });
+            currentX += renameButtonWidth;
 
-                activeButtons.add(formatAndViewButton);
-                activeButtons.add(renameButton);
-                activeButtons.add(deleteButton);
+            // delete
+            Button deleteButton = guiUtils.createButton(parent, "Delete", currentX, rowY, deleteButtonWidth, rowHeight, button -> {
+                Minecraft.getInstance().setScreen(new confirmationScreen(parent, item, "DELETE"));
+            });
 
-                // this is so weird but it works
-                ((pastScansScreen) parent).addButton(formatAndViewButton);
-                ((pastScansScreen) parent).addButton(renameButton);
-                ((pastScansScreen) parent).addButton(deleteButton);
-            }
+            activeButtons.add(formatAndViewButton);
+            activeButtons.add(renameButton);
+            activeButtons.add(deleteButton);
+
+            // this is so weird but it works
+            ((pastScansScreen) parent).addButton(formatAndViewButton);
+            ((pastScansScreen) parent).addButton(renameButton);
+            ((pastScansScreen) parent).addButton(deleteButton);
         }
 
         renderScrollBar();
@@ -230,6 +222,6 @@ public class tableExplorer {
     }
 
     public void refresh() {
-        this.items = filesManager.getChildFolders();
+        this.items = filesManager.getChildFiles();
     }
 }
