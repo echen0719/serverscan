@@ -2,10 +2,15 @@ package echen0719.serverscan.screens;
 
 import java.io.File;
 
+import org.lwjgl.glfw.GLFW;
+
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 import echen0719.serverscan.utils.guiUtils;
@@ -33,6 +38,9 @@ public class viewServerScreen extends Screen {
 
     // parameter values
     private File targetFile;
+
+    // utils
+    private serverExplorer explorer;
 
     public viewServerScreen(Screen parent, File targetFile) {
         super(Component.literal("View Servers"));
@@ -93,6 +101,50 @@ public class viewServerScreen extends Screen {
         this.addRenderableWidget(backButton);
     }
 
+    private void renderTable(GuiGraphics context, double mouseX, double mouseY) {
+        explorer.setContext(context);
+        explorer.createBackground();
+        explorer.renderFileTable(mouseX, mouseY);
+    }
+
+    public void addButton(Button button) {
+        this.addRenderableWidget(button);
+    }
+
+    public void removeButton(Button button) {
+        this.removeWidget(button);
+    }
+
+    @Override
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        if (searchBox.isFocused() && (keyCode == GLFW.GLFW_KEY_ENTER)) {
+            String searchTerm = searchBox.getValue().trim();
+            explorer.setSearchTerm(searchTerm);
+            return true;
+        }
+        return super.keyPressed(event);
+    }
+
+    private boolean onMouseScroll(Screen screen, double mouseX, double mouseY, double deltaX, double deltaY, boolean consumed) {
+        explorer.handleScroll(mouseX, mouseY, deltaY);
+        return true;
+    }
+
+    private boolean onMouseClick(Screen screen, MouseButtonEvent event, boolean consumed) {
+        if (event.button() == 0) {
+            return explorer.handleMouseClick(event.x(), event.y()) || consumed; // if else one-liner
+        }
+        return consumed;
+    }
+
+    private boolean onMouseRelease(Screen screen, MouseButtonEvent event, boolean consumed) {
+        if (event.button() == 0) {
+            explorer.handleMouseRelease();
+        }
+        return consumed;
+    }
+
     @Override
     protected void init() {
         super.init();
@@ -104,10 +156,20 @@ public class viewServerScreen extends Screen {
 
         createTopControlsAndCalcTable();
         createBottomButtons();
+
+        explorer = new serverExplorer(this, tableX, tableY, tableWidth, tableHeight);
+
+        // docs are confusing
+        ScreenMouseEvents.afterMouseScroll(this).register((ScreenMouseEvents.AfterMouseScroll) this::onMouseScroll); // method reference
+        ScreenMouseEvents.afterMouseClick(this).register((ScreenMouseEvents.AfterMouseClick) this::onMouseClick);
+        ScreenMouseEvents.afterMouseRelease(this).register((ScreenMouseEvents.AfterMouseRelease) this::onMouseRelease);
     }
 
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {    
+        renderTable(context, mouseX, mouseY);
+        explorer.handleMouseDrag(mouseY);
+
         super.render(context, mouseX, mouseY, delta);
     }
 }
