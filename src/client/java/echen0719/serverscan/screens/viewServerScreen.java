@@ -157,7 +157,7 @@ public class viewServerScreen extends Screen {
         createTopControlsAndCalcTable();
         createBottomButtons();
 
-        explorer = new serverExplorer(this, tableX, tableY, tableWidth, tableHeight);
+        explorer = new serverExplorer(this, tableX, tableY, tableWidth, tableHeight, targetFile);
 
         // docs are confusing
         ScreenMouseEvents.afterMouseScroll(this).register((ScreenMouseEvents.AfterMouseScroll) this::onMouseScroll); // method reference

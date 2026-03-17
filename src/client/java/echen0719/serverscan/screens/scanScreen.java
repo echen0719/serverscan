@@ -102,7 +102,7 @@ public class scanScreen extends Screen {
         portBox = guiUtils.createInputBox(this, portBoxX, formStartY, portBoxWidth, widgetHeight, "25565");
         rateBox = guiUtils.createInputBox(this, rateBoxX, formStartY, rateBoxWidth, widgetHeight, "100000");
         chunkBox = guiUtils.createInputBox(this, chunkBoxX, formStartY, chunkBoxWidth, widgetHeight, "65536");
-        outFileBox = guiUtils.createInputBox(this, formStartX, outFileBoxY, outFileBoxWidth, widgetHeight, "output.txt");
+        outFileBox = guiUtils.createInputBox(this, formStartX, outFileBoxY, outFileBoxWidth, widgetHeight, "output.json");
 
         this.addRenderableWidget(ipBox);
         this.addRenderableWidget(portBox);

@@ -1,6 +1,15 @@
 package echen0719.serverscan.screens;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+
+// apparently gson is bundled with Minecraft
+// so my implementation is just a copy paste
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonElement;
 import java.util.ArrayList;
 
 import net.minecraft.client.gui.components.Button;
@@ -16,8 +25,6 @@ public class serverExplorer {
 
     // values
     private String searchTerm = "";
-    private ArrayList<ServerEntry> serverEntries = new ArrayList<ServerEntry>();
-    private ArrayList<Boolean> selectedRows = new ArrayList<Boolean>();
 
     // values calculated by init
     private int tableX, tableY, tableWidth, tableHeight;
@@ -30,6 +37,8 @@ public class serverExplorer {
     private static int lightGray = 0xFF808080;
     private static int scrollBarColor = 0xFF4A4A4A;
     private static int scrollBarHoverColor = 0xFF8A8A8A;
+    private static int checkboxChecked = 0xFF55FF55;
+    private static int checkboxUnchecked = 0xFF555555;
 
     // layout constants
     private static int rowHeight = 20;
@@ -41,22 +50,73 @@ public class serverExplorer {
     private int visibleRows = 0;
     private boolean isScrollDragging = false;
 
+    // parameter values
+    private File targetFile;
+
+    // stored values for user selections
     private ArrayList<Button> activeButtons = new ArrayList<Button>();
+    private ArrayList<Integer> selectedRows = new ArrayList<Integer>();
+    private ArrayList<ServerEntry> serverEntries = new ArrayList<ServerEntry>();
 
     private GuiGraphics context;
     private fileUtils filesManager = new fileUtils(FabricLoader.getInstance().getGameDirectory());
-    private File[] items = filesManager.getChildFiles();
 
-    public serverExplorer(Screen screen, int tableX, int tableY, int tableWidth, int tableHeight) {
+    // class makes logic easier 🤷
+    public class ServerEntry {
+        public String ip;
+        public int port;
+        public boolean isSelected;
+
+        public ServerEntry(String ip, int port) {
+            this.ip = ip;
+            this.port = port;
+            this.isSelected = false;
+        }
+    }
+
+    public serverExplorer(Screen screen, int tableX, int tableY, int tableWidth, int tableHeight, File targetFile) {
         this.parent = screen;
         this.tableX = tableX; this.tableY = tableY;
         this.tableWidth = tableWidth; this.tableHeight = tableHeight;
+        this.targetFile = targetFile;
+
+        loadServerEntries();
     }
 
+    // https://stackoverflow.com/questions/5015844
+    // https://stackoverflow.com/questions/20057695
     private void loadServerEntries() {
         serverEntries.clear();
         selectedRows.clear();
-        // parse json
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(targetFile))) {
+            String content = "";
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                content += line; // if json files are concatenated
+            }
+
+            content = content.replace("][", ",");
+            JsonArray servers = JsonParser.parseString(content).getAsJsonArray();
+
+            for (JsonElement element : servers) {
+                JsonObject server = element.getAsJsonObject();
+
+                String ip = server.get("ip").getAsString();
+                JsonArray ports = server.getAsJsonArray("ports");
+
+                // ports is an array since user can search multiple for each IP
+                if (ports.size() > 0) {
+                    int port = ports.get(0).getAsJsonObject().get("port").getAsInt();
+                    serverEntries.add(new ServerEntry(ip, port));
+                }
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("You probably have an invalid or improperly formatted file.");
+        }
     }
 
     public void setContext(GuiGraphics context) {
@@ -78,7 +138,7 @@ public class serverExplorer {
 
     public void renderFileTable(double mouseX, double mouseY) {
         for (Button button : activeButtons) {
-            ((pastScansScreen) parent).removeButton(button);
+            ((viewServerScreen) parent).removeButton(button);
         }
         activeButtons.clear();
 
@@ -89,16 +149,16 @@ public class serverExplorer {
         int emptySpaceWidth = (int)(usableWidth * 0.1f);
         int adButtonWidth = (int)(usableWidth * 0.25f);
 
-        ArrayList<File> displayedItems = new ArrayList<ServerEntry>();
-        for (File item : items) {
+        ArrayList<ServerEntry> displayedEntries = new ArrayList<ServerEntry>();
+        for (ServerEntry entry : serverEntries) {
             // if user searches for phrase, this checks and skips over files without it
-            if (!searchTerm.isEmpty() && !item.getName().toLowerCase().contains(searchTerm)) { 
+            if (!searchTerm.isEmpty() && !entry.ip.toLowerCase().contains(searchTerm)) { 
                 continue;
             }
-            displayedItems.add(item);
+            displayedEntries.add(entry);
         }
 
-        int totalRows = displayedItems.size();
+        int totalRows = displayedEntries.size();
         visibleRows = tableHeight / rowHeight;
         scrollMax = Math.max(0, totalRows - visibleRows);
 
@@ -115,62 +175,45 @@ public class serverExplorer {
                 context.fill(tableX + 1, rowY, tableX + tableWidth - scrollBarWidth - 1, rowY + rowHeight, lightGray);
             }
 
-            File item = displayedItems.get(index);
-
-            String fileName = "";
-            int currentX = tableX;
-                   
-            fileName = "📄  " + displayedItems.get(index).getName();
-            if (fileName.length() > 16) fileName = fileName.substring(0, 13) + "...";
+            ServerEntry entry = displayedEntries.get(index);
+            int currentX = tableX + 5;
         
-            context.drawString(parent.getFont(), fileName, currentX + 5, rowY + 5, white);
+            // checkbox
+            int checkBoxColor = checkboxUnchecked;
 
-            currentX += nameColWidth;
-            context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
+            if (entry.isSelected) {
+                checkBoxColor = checkboxChecked;
+            }
 
-            // file size
-            context.drawCenteredString(parent.getFont(), filesManager.formattedFileSize(item), currentX + sizeColWidth / 2, rowY + 5, white);
+            context.fill(currentX, rowY + 5, currentX + 10, rowY + 15, checkBoxColor);
+            currentX += checkBoxColWidth;
 
-            currentX += sizeColWidth;
-            context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
+            // ip address
+            context.drawCenteredString(parent.getFont(), entry.ip, currentX, rowY + 5, white);
+            currentX += ipColWidth;
 
-            // file date
-            context.drawCenteredString(parent.getFont(), filesManager.formattedDate(item), currentX + dateColWidth / 2, rowY + 5, white);
+            // port
+            context.drawCenteredString(parent.getFont(), String.valueOf(entry.port), currentX, rowY + 5, white);
+            currentX += portColWidth;
 
-            currentX += dateColWidth;
+            // empty space
+            currentX += emptySpaceWidth;
 
             // format & view
-            Button formatAndViewButton = guiUtils.createButton(parent, "View Servers", currentX, rowY, formatButtonWidth, rowHeight, button -> {
-                Minecraft.getInstance().setScreen(new viewServerScreen(parent, item));
-            });
-            currentX += formatButtonWidth;
-
-            // rename
-            Button renameButton = guiUtils.createButton(parent, "Rename", currentX, rowY, renameButtonWidth, rowHeight, button -> {
-                Minecraft.getInstance().setScreen(new confirmationScreen(parent, item, "RENAME"));
-            });
-            currentX += renameButtonWidth;
-
-            // delete
-            Button deleteButton = guiUtils.createButton(parent, "Delete", currentX, rowY, deleteButtonWidth, rowHeight, button -> {
-                Minecraft.getInstance().setScreen(new confirmationScreen(parent, item, "DELETE"));
+            Button addServerButton = guiUtils.createButton(parent, "Add to server list", currentX, rowY, adButtonWidth, rowHeight, button -> {
+                // implement
             });
 
-            activeButtons.add(formatAndViewButton);
-            activeButtons.add(renameButton);
-            activeButtons.add(deleteButton);
+            activeButtons.add(addServerButton);
 
-            // this is so weird but it works
-            ((pastScansScreen) parent).addButton(formatAndViewButton);
-            ((pastScansScreen) parent).addButton(renameButton);
-            ((pastScansScreen) parent).addButton(deleteButton);
+            ((viewServerScreen) parent).addButton(addServerButton);
         }
 
         renderScrollBar(mouseX, mouseY);
     }
 
     private int[] calcScrollBarAttr() {
-        int totalRows = items.length;
+        int totalRows = serverEntries.size();
 
         if (totalRows <= visibleRows) return null;
 
@@ -250,18 +293,7 @@ public class serverExplorer {
     }
 
     public void refresh() {
-        this.items = filesManager.getChildFiles();
+        loadServerEntries();
         this.scrollPos = 0;
-    }
-
-    // finding that a class is probably going to work better than a map or dictionary
-    public static class ServerEntry {
-        public String ip;
-        public int port;
-
-        public ServerEntry(String ip, int port) {
-            this.ip = ip;
-            this.port = port;
-        }
     }
 }
