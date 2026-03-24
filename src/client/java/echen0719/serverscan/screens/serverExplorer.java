@@ -23,6 +23,9 @@ import echen0719.serverscan.utils.guiUtils;
 public class serverExplorer {
     private Screen parent;
 
+    // gui components
+    private Button addServerButton;
+
     // values
     private String searchTerm = "";
 
@@ -42,6 +45,7 @@ public class serverExplorer {
 
     // layout constants
     private static int rowHeight = 20;
+    private static int checkboxSize = 10;
     private static int scrollBarWidth = 5;
 
     // scrolling vars
@@ -54,15 +58,16 @@ public class serverExplorer {
     private File targetFile;
 
     // stored values for user selections
-    private ArrayList<Button> activeButtons = new ArrayList<Button>();
     private ArrayList<Integer> selectedRows = new ArrayList<Integer>();
     private ArrayList<ServerEntry> serverEntries = new ArrayList<ServerEntry>();
+
+    private ArrayList<Button> activeButtons = new ArrayList<Button>();
 
     private GuiGraphics context;
     private fileUtils filesManager = new fileUtils(FabricLoader.getInstance().getGameDirectory());
 
     // class makes logic easier 🤷
-    public class ServerEntry {
+    public static class ServerEntry {
         public String ip;
         public int port;
         public boolean isSelected;
@@ -136,19 +141,7 @@ public class serverExplorer {
     // https://github.com/GotoLink/SkillAPI/blob/master/skillapi/client/GuiKnownSkills.java
     // used a bunch of ideas but made them simpler and for my purposes
 
-    public void renderFileTable(double mouseX, double mouseY) {
-        for (Button button : activeButtons) {
-            ((viewServerScreen) parent).removeButton(button);
-        }
-        activeButtons.clear();
-
-        int usableWidth = tableWidth - scrollBarWidth;
-        int checkBoxColWidth = (int)(usableWidth * 0.1f);
-        int ipColWidth = (int)(usableWidth * 0.3f);
-        int portColWidth = (int)(usableWidth * 0.25f);
-        int emptySpaceWidth = (int)(usableWidth * 0.1f);
-        int adButtonWidth = (int)(usableWidth * 0.25f);
-
+    private ArrayList<ServerEntry> getFilterdEntries() {
         ArrayList<ServerEntry> displayedEntries = new ArrayList<ServerEntry>();
         for (ServerEntry entry : serverEntries) {
             // if user searches for phrase, this checks and skips over files without it
@@ -157,6 +150,24 @@ public class serverExplorer {
             }
             displayedEntries.add(entry);
         }
+        return displayedEntries;
+    }
+
+    public void renderServerTable(double mouseX, double mouseY) {
+        for (Button button : activeButtons) {
+            ((viewServerScreen) parent).removeButton(button);
+        }
+        activeButtons.clear();
+
+        int usableWidth = tableWidth - scrollBarWidth;
+        int checkboxColWidth = (int)(usableWidth * 0.05f);
+        int checkboxWidth = checkboxColWidth / 2;
+        int ipColWidth = (int)(usableWidth * 0.3f);
+        int portColWidth = (int)(usableWidth * 0.25f);
+        int emptySpaceWidth = (int)(usableWidth * 0.1f);
+        int addButtonWidth = (int)(usableWidth * 0.3f);
+
+        ArrayList<ServerEntry> displayedEntries = getFilterdEntries();
 
         int totalRows = displayedEntries.size();
         visibleRows = tableHeight / rowHeight;
@@ -179,33 +190,38 @@ public class serverExplorer {
             int currentX = tableX + 5;
         
             // checkbox
-            int checkBoxColor = checkboxUnchecked;
-
+            int checkboxColor = checkboxUnchecked;
             if (entry.isSelected) {
-                checkBoxColor = checkboxChecked;
+                checkboxColor = checkboxChecked;
             }
 
-            context.fill(currentX, rowY + 5, currentX + 10, rowY + 15, checkBoxColor);
-            currentX += checkBoxColWidth;
+            // so it looks centered based off of checkBoxWidth
+            context.fill(currentX + (checkboxColWidth - checkboxSize) / 2, rowY + (rowHeight - checkboxSize) / 2, currentX + checkboxSize, rowY + checkboxSize, checkboxColor);
+
+            currentX += checkboxColWidth;
+            context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
             // ip address
-            context.drawCenteredString(parent.getFont(), entry.ip, currentX, rowY + 5, white);
+            context.drawCenteredString(parent.getFont(), entry.ip, currentX + ipColWidth / 2, rowY + 5, white);
+
             currentX += ipColWidth;
+            context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
             // port
-            context.drawCenteredString(parent.getFont(), String.valueOf(entry.port), currentX, rowY + 5, white);
+            context.drawCenteredString(parent.getFont(), String.valueOf(entry.port), currentX + portColWidth / 2, rowY + 5, white);
+
             currentX += portColWidth;
+            context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
             // empty space
-            currentX += emptySpaceWidth;
+            currentX += emptySpaceWidth - scrollBarWidth;
 
             // format & view
-            Button addServerButton = guiUtils.createButton(parent, "Add to server list", currentX, rowY, adButtonWidth, rowHeight, button -> {
+            addServerButton = guiUtils.createButton(parent, "Add to server list", currentX, rowY, addButtonWidth, rowHeight, button -> {
                 // implement
             });
 
             activeButtons.add(addServerButton);
-
             ((viewServerScreen) parent).addButton(addServerButton);
         }
 
@@ -245,6 +261,28 @@ public class serverExplorer {
         context.fill(scrollBarX, scrollBarY, scrollBarX + scrollBarWidth, scrollBarY + scrollBarHeight, color);
     }
 
+    private int isMouseOverCheckbox(double mouseX, double mouseY) {
+        int usableWidth = tableWidth - scrollBarWidth;
+        int checkboxColWidth = (int)(usableWidth * 0.05f);
+
+        ArrayList<ServerEntry> displayedEntries = getFilterdEntries();
+        
+        for (int i = 0; i < visibleRows; i++) {
+            int entryIndex = scrollPos + i;
+            // if entry is beyond the size of the list
+            if (entryIndex < 0 || entryIndex >= displayedEntries.size()) continue;
+
+            int rowY = tableY + (i * rowHeight);
+            int checkboxX = tableX + 5 + (checkboxColWidth - checkboxSize) / 2;
+            int checkboxY = rowY + (rowHeight - checkboxSize) / 2;
+
+            if (mouseX >= checkboxX && mouseX <= checkboxX + checkboxSize && mouseY >= checkboxY && mouseY <= checkboxY + checkboxSize) {
+                return entryIndex;
+            }
+        }
+        return -1;
+    }
+
     private boolean isMouseOverScrollbar(double mouseX, double mouseY) {
         int[] scrollBarInfo = calcScrollBarAttr();
         if (scrollBarInfo == null) return false;
@@ -257,6 +295,14 @@ public class serverExplorer {
     public boolean handleMouseClick(double mouseX, double mouseY) {
         if (isMouseOverScrollbar(mouseX, mouseY)) {
             isScrollDragging = true;
+            return true;
+        }
+
+        int hoveredIndex = isMouseOverCheckbox(mouseX, mouseY);
+        if (hoveredIndex != -1) {
+            ArrayList<ServerEntry> displayedEntries = getFilterdEntries();
+            ServerEntry entry = displayedEntries.get(hoveredIndex);
+            entry.isSelected = !entry.isSelected; // toggle selected
             return true;
         }
         return false;

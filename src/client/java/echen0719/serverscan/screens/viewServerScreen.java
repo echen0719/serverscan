@@ -104,7 +104,7 @@ public class viewServerScreen extends Screen {
     private void renderTable(GuiGraphics context, double mouseX, double mouseY) {
         explorer.setContext(context);
         explorer.createBackground();
-        explorer.renderFileTable(mouseX, mouseY);
+        explorer.renderServerTable(mouseX, mouseY);
     }
 
     public void addButton(Button button) {
