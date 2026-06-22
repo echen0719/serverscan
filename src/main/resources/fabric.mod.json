@@ -2,17 +2,17 @@
 	"schemaVersion": 1,
 	"id": "serverscan",
 	"version": "1.0.0",
-	"name": "Server Finder++",
+	"name": "Server Scan",
 	"description": "Scans many IP addresses to find online servers",
 	"authors": [
 		"echen0719"
 	],
 	"contact": {
 		"homepage": "https://echen0719.github.io/",
-		"sources": "https://github.com/echen0719/minecraft-modding"
+		"sources": "https://github.com/echen0719/serverscan"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/serverscan/icon.png",
+	"icon": "assets/serverscan/icon.jpg",
 	"environment": "*",
 	"entrypoints": {
 		"main": [

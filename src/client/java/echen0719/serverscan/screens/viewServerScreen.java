@@ -70,7 +70,8 @@ public class viewServerScreen extends Screen {
 
         searchSubmitButton = guiUtils.createButton(this, "Search", searchBox.getX() + searchBox.getWidth() + padding, guiStartY, searchSubmitButtonWidth, widgetHeight,
         button -> {
-            // later
+            String searchTerm = searchBox.getValue().trim();
+            explorer.setSearchTerm(searchTerm);
         });
         this.addRenderableWidget(searchSubmitButton);
     }
@@ -79,18 +80,19 @@ public class viewServerScreen extends Screen {
         int buttonY = tableY + tableHeight + 10;
 
         int selectionButtonWidth = (int)(widthForWidgets * 0.3f);
-        int addServersButtonWidth = (int)(widthForWidgets * 0.3f);
+        int addServersButtonWidth = (int)(widthForWidgets * 0.42f);
         int backButtonWidth = (int)(widthForWidgets * 0.2f);
 
         selectionButton = guiUtils.createButton(this, "Select/Deselect All", guiStartX, buttonY, selectionButtonWidth, widgetHeight,
         button -> {
-            //
+            explorer.toggleSelectAll();
         });
         this.addRenderableWidget(selectionButton);
 
-        addServersButton = guiUtils.createButton(this, "Add to Servers List", guiStartX + selectionButtonWidth + padding, buttonY, addServersButtonWidth, widgetHeight,
+        addServersButton = guiUtils.createButton(this, "Add Selected to Servers List", guiStartX + selectionButtonWidth + padding, buttonY, addServersButtonWidth, widgetHeight,
         button -> {
-            //
+            explorer.addAllSelectedServers();
+            System.out.println("Added add selected to servers.");
         });
         this.addRenderableWidget(addServersButton);
 

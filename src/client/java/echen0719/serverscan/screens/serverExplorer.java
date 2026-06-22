@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ServerList;
+import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.gui.screens.Screen;
 import net.fabricmc.loader.api.FabricLoader;
 import echen0719.serverscan.utils.fileUtils;
@@ -65,6 +67,10 @@ public class serverExplorer {
 
     private GuiGraphics context;
     private fileUtils filesManager = new fileUtils(FabricLoader.getInstance().getGameDirectory());
+
+    // server list stuff
+    Minecraft minecraft = Minecraft.getInstance();
+    ServerList serverList = new ServerList(minecraft);
 
     // class makes logic easier 🤷
     public static class ServerEntry {
@@ -153,6 +159,49 @@ public class serverExplorer {
         return displayedEntries;
     }
 
+    public void toggleSelectAll() {
+        ArrayList<ServerEntry> serverEntries = getFilterdEntries();
+        if (serverEntries.isEmpty()) return;
+
+        boolean hasUnselected = false;
+        for (ServerEntry entry : serverEntries) {
+            if (!entry.isSelected) {
+                hasUnselected = true;
+                break;
+            }
+        }
+
+        for (ServerEntry entry : serverEntries) {
+            entry.isSelected = hasUnselected;
+        }
+    }
+
+    public void addServerToMinecraft(String ip, int port) {
+        serverList.load();
+        String fullAddress = (port == 25565) ? ip : ip + ":" + port;
+        String serverName = ip;
+
+        ServerData newServer = new ServerData(serverName, fullAddress, ServerData.Type.OTHER);
+
+        for (int i = 0; i < serverList.size(); i++) {
+            if (serverList.get(i).ip.equalsIgnoreCase(fullAddress)) {
+                System.out.println(ip + ":" + port + " already exists in the list.");
+                return; 
+            }
+        }
+
+        serverList.add(newServer, false); 
+        serverList.save();
+    }
+
+    public void addAllSelectedServers() {
+        for (ServerEntry entry : serverEntries) {
+            if (entry.isSelected) {
+                addServerToMinecraft(entry.ip, entry.port);
+            }
+        }
+    }
+
     public void renderServerTable(double mouseX, double mouseY) {
         for (Button button : activeButtons) {
             ((viewServerScreen) parent).removeButton(button);
@@ -195,8 +244,11 @@ public class serverExplorer {
                 checkboxColor = checkboxChecked;
             }
 
+            int checkboxX = tableX + (5 + checkboxColWidth - checkboxSize) / 2;
+            int checkboxY = rowY + (rowHeight - checkboxSize) / 2;
+
             // so it looks centered based off of checkBoxWidth
-            context.fill(currentX + (checkboxColWidth - checkboxSize) / 2, rowY + (rowHeight - checkboxSize) / 2, currentX + checkboxSize, rowY + checkboxSize, checkboxColor);
+            context.fill(checkboxX, checkboxY, checkboxX + checkboxSize, checkboxY + checkboxSize, checkboxColor);
 
             currentX += checkboxColWidth;
             context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
@@ -217,8 +269,9 @@ public class serverExplorer {
             currentX += emptySpaceWidth - scrollBarWidth;
 
             // format & view
-            addServerButton = guiUtils.createButton(parent, "Add to server list", currentX, rowY, addButtonWidth, rowHeight, button -> {
-                // implement
+            addServerButton = guiUtils.createButton(parent, "Add to Servers List", currentX, rowY, addButtonWidth, rowHeight, button -> {
+                addServerToMinecraft(entry.ip, entry.port);
+                System.out.println("Added: " + entry.ip + ":" + entry.port);
             });
 
             activeButtons.add(addServerButton);
@@ -273,7 +326,7 @@ public class serverExplorer {
             if (entryIndex < 0 || entryIndex >= displayedEntries.size()) continue;
 
             int rowY = tableY + (i * rowHeight);
-            int checkboxX = tableX + 5 + (checkboxColWidth - checkboxSize) / 2;
+            int checkboxX = tableX + (5 + checkboxColWidth - checkboxSize) / 2;
             int checkboxY = rowY + (rowHeight - checkboxSize) / 2;
 
             if (mouseX >= checkboxX && mouseX <= checkboxX + checkboxSize && mouseY >= checkboxY && mouseY <= checkboxY + checkboxSize) {
