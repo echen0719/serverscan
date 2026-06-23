@@ -1,8 +1,11 @@
 package echen0719.serverscan;
 
 import java.io.File;
-
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Collections;
+import java.util.concurrent.ThreadLocalRandom;
 
 import java.util.concurrent.CopyOnWriteArrayList; // arraylist but for concurrency
 import java.util.concurrent.ConcurrentLinkedDeque; // queue but for concurrency
@@ -95,7 +98,7 @@ public class scanExecutor {
 				
 				long chunkEnd = Math.min(nextIP + chunkSize - 1, activeRange[1]);
 				String ipChunk = IPUtils.longToIP(nextIP) + "-" + IPUtils.longToIP(chunkEnd);
-				System.out.println("DEBUG:" + ipChunk);
+				System.out.println("DEBUG: " + ipChunk);
 				System.out.println("IPs to scan: " + (chunkEnd - nextIP + 1));
 				nextIP = chunkEnd + 1;
 				if (nextIP > activeRange[1]) activeRange = null;
@@ -169,6 +172,44 @@ public class scanExecutor {
     	return currentProcess != null;
 	}
 
+	private static void rebuildIpQueue(int newChunkSize) {
+		try {
+			List<long[]> ranges = new ArrayList<>();
+			long[] segment;
+			while ((segment = ipRangeQueue.pollFirst()) != null) ranges.add(segment);
+			if (ranges.isEmpty()) return;
+
+			ranges.sort(Comparator.comparingLong(a -> a[0]));
+
+			// merge queue into one list
+			List<long[]> merged = new ArrayList<>();
+			for (long[] range : ranges) {
+				if (merged.isEmpty()) { merged.add(new long[] {range[0], range[1]}); continue; }
+				long[] last = merged.get(merged.size() - 1);
+				if (range[0] <= last[1] + 1) last[1] = Math.max(last[1], range[1]);
+				else merged.add(new long[] {range[0], range[1]});
+			}
+
+			// rechunk the list with new chunk size
+			List<long[]> chunks = new ArrayList<>();
+			for (long[] chunk : merged) {
+				long s = chunk[0], e = chunk[1];
+				for (long start = s; start <= e; start += newChunkSize) {
+					long end = Math.min(start + newChunkSize - 1, e);
+					chunks.add(new long[] {start, end});
+				}
+			}
+
+			// randomize order and push back into the queue
+			Collections.shuffle(chunks, ThreadLocalRandom.current());
+			for (long[] chunk : chunks) {
+				ipRangeQueue.addLast(chunk);
+			}
+		} catch (Exception ex) {
+			addLog("Error rebuilding IP queue: " + ex.getMessage());
+		}
+	}
+
     public static void startScan(String ipRanges, String portRanges, String rate, int chunkSize, String output) {
 		if (running) return; // prevent race-conditions
 
@@ -202,11 +243,16 @@ public class scanExecutor {
 
     public static void resume(String newRate, int newChunkSize) {
 		if (!running) return;
-		paused = false;
 
 		rate = newRate;
-		chunkSize = newChunkSize;
 
+		if (newChunkSize > 0 && newChunkSize != chunkSize) {
+			addLog("Rebuilding IP queue for new batch_size=" + newChunkSize);
+			rebuildIpQueue(newChunkSize);
+			chunkSize = newChunkSize;
+		}
+
+		paused = false;
 		addLog("Scan resuming with rate=" + rate + " and batch_size=" + chunkSize);
     }
 
