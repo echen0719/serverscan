@@ -4,8 +4,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 
@@ -118,34 +116,29 @@ public class pastScansScreen extends Screen {
     }
 
     @Override // really have to read mappings
-    public boolean keyPressed(KeyEvent event) {
-        int keyCode = event.key();
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (searchBox.isFocused() && (keyCode == GLFW.GLFW_KEY_ENTER)) {
             String searchTerm = searchBox.getValue().trim();
             explorer.setSearchTerm(searchTerm);
             return true; // takes in enter key for search box
         }
-        return super.keyPressed(event);
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    private boolean onMouseScroll(Screen screen, double mouseX, double mouseY, double deltaX, double deltaY, boolean consumed) {
+    private void onMouseScroll(Screen screen, double mouseX, double mouseY, double deltaX, double deltaY) {
         explorer.handleScroll(mouseX, mouseY, deltaY);
-        return true;
     }
 
-    // Minecraft's MouseButtonEvent
-    private boolean onMouseClick(Screen screen, MouseButtonEvent event, boolean consumed) {
-        if (event.button() == 0) {
-            return explorer.handleMouseClick(event.x(), event.y()) || consumed; // if else one-liner
+    private void onMouseClick(Screen screen, double mouseX, double mouseY, int button) {
+        if (button == 0) {
+            explorer.handleMouseClick(mouseX, mouseY);
         }
-        return consumed;
     }
 
-    private boolean onMouseRelease(Screen screen, MouseButtonEvent event, boolean consumed) {
-        if (event.button() == 0) {
+    private void onMouseRelease(Screen screen, double mouseX, double mouseY, int button) {
+        if (button == 0) {
             explorer.handleMouseRelease();
         }
-        return consumed;
     }
 
     @Override
