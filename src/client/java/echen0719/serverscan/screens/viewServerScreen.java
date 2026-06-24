@@ -116,29 +116,34 @@ public class viewServerScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
         if (searchBox.isFocused() && (keyCode == GLFW.GLFW_KEY_ENTER)) {
             String searchTerm = searchBox.getValue().trim();
             explorer.setSearchTerm(searchTerm);
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
-    private void onMouseScroll(Screen screen, double mouseX, double mouseY, double deltaX, double deltaY) {
+    private boolean onMouseScroll(Screen screen, double mouseX, double mouseY, double deltaX, double deltaY, boolean consumed) {
         explorer.handleScroll(mouseX, mouseY, deltaY);
+        return true;
     }
 
-    private void onMouseClick(Screen screen, double mouseX, double mouseY, int button) {
-        if (button == 0) {
-            explorer.handleMouseClick(mouseX, mouseY);
+    // Minecraft's MouseButtonEvent
+    private boolean onMouseClick(Screen screen, MouseButtonEvent event, boolean consumed) {
+        if (event.button() == 0) {
+            return explorer.handleMouseClick(event.x(), event.y()) || consumed; // if else one-liner
         }
+        return consumed;
     }
 
-    private void onMouseRelease(Screen screen, double mouseX, double mouseY, int button) {
-        if (button == 0) {
+    private boolean onMouseRelease(Screen screen, MouseButtonEvent event, boolean consumed) {
+        if (event.button() == 0) {
             explorer.handleMouseRelease();
         }
+        return consumed;
     }
 
     @Override
