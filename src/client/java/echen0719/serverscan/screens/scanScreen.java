@@ -3,7 +3,7 @@ package echen0719.serverscan.screens;
 import java.util.List;
 
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
@@ -222,7 +222,7 @@ public class scanScreen extends Screen {
         }
     }
 
-    public void renderTerm(GuiGraphics context) { // context works only within render()
+    public void renderTerm(GuiGraphicsExtractor context) { // context works only within render()
         int termInset = 5;
 
         // black background with gray borders
@@ -236,7 +236,7 @@ public class scanScreen extends Screen {
         int currentY = termY + termInset; // new lines are 5 pixels below
 
         for (int i = startIndex; i < logs.size(); i++) {
-            context.drawString(this.font, Component.literal(logs.get(i)), termX + termInset, currentY, white);
+            context.text(this.font, Component.literal(logs.get(i)), termX + termInset, currentY, white);
             currentY += this.font.lineHeight;
         }
     }
@@ -265,18 +265,18 @@ public class scanScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
 	    updateControlButtons();
 
         int labelOffsetY = -this.font.lineHeight - 3;
 
         // Labels for input boxes
-        context.drawString(this.font, Component.literal("IP Ranges: "), ipBox.getX(), ipBox.getY() + labelOffsetY, white);
-        context.drawString(this.font, Component.literal("Port Ranges: "), portBox.getX(), portBox.getY() + labelOffsetY, white);
-        context.drawString(this.font, Component.literal("Speed (pps): "), rateBox.getX(), rateBox.getY() + labelOffsetY, white);
-	    context.drawString(this.font, Component.literal("Batch size: "), chunkBox.getX(), chunkBox.getY() + labelOffsetY, white);
+        context.text(this.font, Component.literal("IP Ranges: "), ipBox.getX(), ipBox.getY() + labelOffsetY, white);
+        context.text(this.font, Component.literal("Port Ranges: "), portBox.getX(), portBox.getY() + labelOffsetY, white);
+        context.text(this.font, Component.literal("Speed (pps): "), rateBox.getX(), rateBox.getY() + labelOffsetY, white);
+	    context.text(this.font, Component.literal("Batch size: "), chunkBox.getX(), chunkBox.getY() + labelOffsetY, white);
 
         renderTerm(context);
     }

@@ -13,7 +13,7 @@ import com.google.gson.JsonElement;
 import java.util.ArrayList;
 
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerList;
 import net.minecraft.client.multiplayer.ServerData;
@@ -65,7 +65,7 @@ public class serverExplorer {
 
     private ArrayList<Button> activeButtons = new ArrayList<Button>();
 
-    private GuiGraphics context;
+    private GuiGraphicsExtractor context;
     private fileUtils filesManager = new fileUtils(FabricLoader.getInstance().getGameDirectory());
 
     // server list stuff
@@ -130,7 +130,7 @@ public class serverExplorer {
         }
     }
 
-    public void setContext(GuiGraphics context) {
+    public void setContext(GuiGraphicsExtractor context) {
         this.context = context;
     }
 
@@ -254,13 +254,13 @@ public class serverExplorer {
             context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
             // ip address
-            context.drawCenteredString(parent.getFont(), entry.ip, currentX + ipColWidth / 2, rowY + 5, white);
+            context.centeredText(parent.getFont(), entry.ip, currentX + ipColWidth / 2, rowY + 5, white);
 
             currentX += ipColWidth;
             context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
             // port
-            context.drawCenteredString(parent.getFont(), String.valueOf(entry.port), currentX + portColWidth / 2, rowY + 5, white);
+            context.centeredText(parent.getFont(), String.valueOf(entry.port), currentX + portColWidth / 2, rowY + 5, white);
 
             currentX += portColWidth;
             context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);

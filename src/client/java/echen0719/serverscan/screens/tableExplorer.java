@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.fabricmc.loader.api.FabricLoader;
@@ -42,7 +42,7 @@ public class tableExplorer {
     // making logic for clearing button (for preventing overlap) easier
     private ArrayList<Button> activeButtons = new ArrayList<Button>();
 
-    private GuiGraphics context;
+    private GuiGraphicsExtractor context;
     private fileUtils filesManager = new fileUtils(FabricLoader.getInstance().getGameDirectory());
     private File[] items = filesManager.getChildFiles("output");
 
@@ -52,7 +52,7 @@ public class tableExplorer {
         this.tableWidth = tableWidth; this.tableHeight = tableHeight;
     }
 
-    public void setContext(GuiGraphics context) {
+    public void setContext(GuiGraphicsExtractor context) {
         this.context = context;
     }
 
@@ -117,19 +117,19 @@ public class tableExplorer {
             fileName = "📄  " + displayedItems.get(index).getName();
             if (fileName.length() > 16) fileName = fileName.substring(0, 13) + "...";
         
-            context.drawString(parent.getFont(), fileName, currentX + 5, rowY + 5, white);
+            context.text(parent.getFont(), fileName, currentX + 5, rowY + 5, white);
 
             currentX += nameColWidth;
             context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
             // file size
-            context.drawCenteredString(parent.getFont(), filesManager.formattedFileSize(item), currentX + sizeColWidth / 2, rowY + 5, white);
+            context.centeredText(parent.getFont(), filesManager.formattedFileSize(item), currentX + sizeColWidth / 2, rowY + 5, white);
 
             currentX += sizeColWidth;
             context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
             // file date
-            context.drawCenteredString(parent.getFont(), filesManager.formattedDate(item), currentX + dateColWidth / 2, rowY + 5, white);
+            context.centeredText(parent.getFont(), filesManager.formattedDate(item), currentX + dateColWidth / 2, rowY + 5, white);
 
             currentX += dateColWidth;
 

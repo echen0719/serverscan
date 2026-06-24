@@ -7,7 +7,7 @@ import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.KeyEvent;
@@ -103,7 +103,7 @@ public class viewServerScreen extends Screen {
         this.addRenderableWidget(backButton);
     }
 
-    private void renderTable(GuiGraphics context, double mouseX, double mouseY) {
+    private void renderTable(GuiGraphicsExtractor context, double mouseX, double mouseY) {
         explorer.setContext(context);
         explorer.createBackground();
         explorer.renderServerTable(mouseX, mouseY);
@@ -169,10 +169,10 @@ public class viewServerScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {    
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {    
         renderTable(context, mouseX, mouseY);
         explorer.handleMouseDrag(mouseY);
 
-        super.render(context, mouseX, mouseY, delta);
+        super.extractRenderState(context, mouseX, mouseY, delta);
     }
 }
