@@ -7,7 +7,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents; // fabric scroll
 import net.fabricmc.loader.api.FabricLoader;
