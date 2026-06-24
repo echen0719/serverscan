@@ -117,19 +117,19 @@ public class tableExplorer {
             fileName = "📄  " + displayedItems.get(index).getName();
             if (fileName.length() > 16) fileName = fileName.substring(0, 13) + "...";
         
-            context.drawString(parent.getFont(), fileName, currentX + 5, rowY + 5, white);
+            context.drawString(Minecraft.getInstance().font, fileName, currentX + 5, rowY + 5, white);
 
             currentX += nameColWidth;
             context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
             // file size
-            context.drawCenteredString(parent.getFont(), filesManager.formattedFileSize(item), currentX + sizeColWidth / 2, rowY + 5, white);
+            context.drawCenteredString(Minecraft.getInstance().font, filesManager.formattedFileSize(item), currentX + sizeColWidth / 2, rowY + 5, white);
 
             currentX += sizeColWidth;
             context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
             // file date
-            context.drawCenteredString(parent.getFont(), filesManager.formattedDate(item), currentX + dateColWidth / 2, rowY + 5, white);
+            context.drawCenteredString(Minecraft.getInstance().font, filesManager.formattedDate(item), currentX + dateColWidth / 2, rowY + 5, white);
 
             currentX += dateColWidth;
 
