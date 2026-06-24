@@ -1,6 +1,13 @@
 package echen0719.serverscan;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -36,17 +43,30 @@ public class scanExecutor {
     private static final ConcurrentLinkedDeque<long[]> ipRangeQueue = new ConcurrentLinkedDeque<long[]>();
 
 	private static fileUtils filesManager;
+	private static PrintWriter logWriter = null;
+	private static DateTimeFormatter fileDateFormatter = DateTimeFormatter.ofPattern("yyyy-M-dd-HH-mm-ss");
+	private static DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    private static void addLog(String message) {
+    public static void addLog(String message) {
 		logs.add(message);
 		if (logs.size() > 500) { // reduces logs memory usage with 500 lines
 	    	logs.removeFirst();
+		}
+
+		if (logWriter != null) {
+			try {
+				logWriter.println("[" + LocalTime.now().format(logDateFormatter) + "] " + message);
+				logWriter.flush();
+			}
+			catch (Exception e) {
+				System.err.println("Failed to write to log file: " + e.getMessage());
+			}
 		}
     }
 
     // https://www.baeldung.com/java-executor-service-tutorial
     private static void runScan(String portRanges, String output) {
-		addLog("Scan started...");
+		addLog("Scan started with rate=" + rate + " and batch_size=" + chunkSize);
 
         try {
 	    	File gameDir = FabricLoader.getInstance().getGameDirectory();
@@ -98,8 +118,13 @@ public class scanExecutor {
 				
 				long chunkEnd = Math.min(nextIP + chunkSize - 1, activeRange[1]);
 				String ipChunk = IPUtils.longToIP(nextIP) + "-" + IPUtils.longToIP(chunkEnd);
-				System.out.println("DEBUG: " + ipChunk);
+
 				System.out.println("IPs to scan: " + (chunkEnd - nextIP + 1));
+				System.out.println("CHUNK: " + ipChunk);
+
+				addLog("IPs to scan: " + (chunkEnd - nextIP + 1));
+				addLog("CHUNK: " + ipChunk);
+
 				nextIP = chunkEnd + 1;
 				if (nextIP > activeRange[1]) activeRange = null;
 
@@ -156,6 +181,11 @@ public class scanExecutor {
 	    	paused = false;
 	    	currentProcess = null;
 			ipRangeQueue.clear();
+
+			if (logWriter != null) {
+				logWriter.close();
+				logWriter = null;
+			}
 
 	    	try { // merge when stopped
 				if (filesManager != null) {
@@ -216,6 +246,29 @@ public class scanExecutor {
 		running = true;
 		paused = false;
 
+		try {
+			File gameDir = FabricLoader.getInstance().getGameDirectory();
+			filesManager = new fileUtils(gameDir);
+
+			String timestamp = LocalDateTime.now().format(fileDateFormatter);
+			String logFileName = timestamp + "-logs.txt";
+
+			if (filesManager.logFileExists(logFileName)) {
+                addLog("File already exists. Used another file name.");
+                return;
+			}
+
+			File logFile = filesManager.createLogFile(logFileName);
+			
+			logWriter = new PrintWriter(new FileWriter(logFile, true));
+    	} 
+		catch (Exception e) {
+        	e.printStackTrace();
+			addLog("Failed to initialize log file: " + e.getMessage());
+			running = false;
+			return;
+    	}
+
 		scanExecutor.rate = rate;
 		scanExecutor.chunkSize = chunkSize; // static issues
 		ipRangeQueue.clear();
@@ -231,7 +284,6 @@ public class scanExecutor {
 		}
 
 		logs.clear();
-
         executor.submit(() -> runScan(portRanges, output)); // submit runScan task
     }
 

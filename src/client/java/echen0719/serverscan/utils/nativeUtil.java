@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
+import echen0719.serverscan.scanExecutor;
+
 public class nativeUtil {
     private static File executable;
 
@@ -33,6 +35,7 @@ public class nativeUtil {
             File foundExecutable = findMasscan();
             if (foundExecutable != null) {
                 System.out.println("Using installed masscan: " + foundExecutable.getAbsolutePath());
+                scanExecutor.addLog("Using installed masscan: " + foundExecutable.getAbsolutePath());
                 executable = foundExecutable;
                 return executable;
             }

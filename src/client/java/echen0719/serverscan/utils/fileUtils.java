@@ -12,15 +12,26 @@ import java.util.Date;
 public class fileUtils {
     private static final String chunkExtension = ".tmp.chunk";
     private final File outputsFolder;
+    private final File logsFolder;
 
     public fileUtils(File gameDir) {
         this.outputsFolder = new File(gameDir, "serverscan/outputs");
+        this.logsFolder = new File(gameDir, "serverscan/logs");
         ensureFolderExists();
     }
 
-    public File[] getChildFiles() {
+    public File[] getChildFiles(String folder) {
         ArrayList<File> files = new ArrayList<File>();
-        for (File file : outputsFolder.listFiles()) {
+
+        File targetFolder = null;
+        if (folder.equals("output")) {
+            targetFolder = outputsFolder;
+        }
+        else if (folder.equals("logs")) {
+            targetFolder = logsFolder;
+        }
+
+        for (File file : targetFolder.listFiles()) {
             if (file.isFile()) {
                 files.add(file);
             }
@@ -61,10 +72,17 @@ public class fileUtils {
         if (!outputsFolder.exists()) {
             outputsFolder.mkdirs();
         }
+        if (!logsFolder.exists()) {
+            logsFolder.mkdirs();
+        }
     }
 
     public File getOutputsFolder() {
         return outputsFolder;
+    }
+
+    public File getLogsFolder() {
+        return logsFolder;
     }
 
     public boolean outputFileExists(String outputName) {
@@ -76,6 +94,17 @@ public class fileUtils {
         File outputFile = new File(outputsFolder, outputName);
         outputFile.createNewFile();
         return outputFile;
+    }
+
+    public boolean logFileExists(String logName) {
+        File logFile = new File(logsFolder, logName);
+        return logFile.exists();
+    }
+
+    public File createLogFile(String logName) throws Exception {
+        File logFile = new File(logsFolder, logName);
+        logFile.createNewFile();
+        return logFile;
     }
 
     public File createChunkFile(String outputName, int chunkIndex) {

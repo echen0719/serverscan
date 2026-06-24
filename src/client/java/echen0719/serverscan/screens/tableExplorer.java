@@ -44,7 +44,7 @@ public class tableExplorer {
 
     private GuiGraphics context;
     private fileUtils filesManager = new fileUtils(FabricLoader.getInstance().getGameDirectory());
-    private File[] items = filesManager.getChildFiles();
+    private File[] items = filesManager.getChildFiles("output");
 
     public tableExplorer(Screen screen, int tableX, int tableY, int tableWidth, int tableHeight) {
         this.parent = screen;
@@ -244,7 +244,7 @@ public class tableExplorer {
     }
 
     public void refresh() {
-        this.items = filesManager.getChildFiles();
+        this.items = filesManager.getChildFiles("output");
         this.scrollPos = 0;
     }
 }
