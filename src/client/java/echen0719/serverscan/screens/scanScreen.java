@@ -3,6 +3,7 @@ package echen0719.serverscan.screens;
 import java.util.List;
 
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.EditBox;
@@ -176,13 +177,13 @@ public class scanScreen extends Screen {
 				ServerscanClient.logsScreen = new pastScansScreen(this);
 			}
 
-			this.minecraft.setScreen(ServerscanClient.logsScreen);
+			Minecraft.getInstance().setScreenAndShow(ServerscanClient.logsScreen);
         });
         this.addRenderableWidget(logsButton);
 
         backButton = guiUtils.createButton(this, "Back", logsButton.getX() + logsButton.getWidth() + padding, buttonY, backWidth, widgetHeight,
         button -> {
-            this.minecraft.setScreen(parent);
+            Minecraft.getInstance().setScreenAndShow(parent);
         });
         this.addRenderableWidget(backButton);
     }

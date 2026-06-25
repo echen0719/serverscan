@@ -135,19 +135,19 @@ public class tableExplorer {
 
             // format & view
             Button formatAndViewButton = guiUtils.createButton(parent, "View Servers", currentX, rowY, formatButtonWidth, rowHeight, button -> {
-                Minecraft.getInstance().setScreen(new viewServerScreen(parent, item));
+                Minecraft.getInstance().setScreenAndShow(new viewServerScreen(parent, item));
             });
             currentX += formatButtonWidth;
 
             // rename
             Button renameButton = guiUtils.createButton(parent, "Rename", currentX, rowY, renameButtonWidth, rowHeight, button -> {
-                Minecraft.getInstance().setScreen(new confirmationScreen(parent, item, "RENAME"));
+                Minecraft.getInstance().setScreenAndShow(new confirmationScreen(parent, item, "RENAME"));
             });
             currentX += renameButtonWidth;
 
             // delete
             Button deleteButton = guiUtils.createButton(parent, "Delete", currentX, rowY, deleteButtonWidth, rowHeight, button -> {
-                Minecraft.getInstance().setScreen(new confirmationScreen(parent, item, "DELETE"));
+                Minecraft.getInstance().setScreenAndShow(new confirmationScreen(parent, item, "DELETE"));
             });
 
             activeButtons.add(formatAndViewButton);

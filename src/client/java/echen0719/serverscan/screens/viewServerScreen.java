@@ -7,6 +7,7 @@ import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -98,7 +99,7 @@ public class viewServerScreen extends Screen {
 
         backButton = guiUtils.createButton(this, "Back", guiStartX + widthForWidgets - backButtonWidth, buttonY, backButtonWidth, widgetHeight,
         button -> {
-            this.minecraft.setScreen(parent);
+            Minecraft.getInstance().setScreenAndShow(parent);
         });
         this.addRenderableWidget(backButton);
     }
