@@ -1,6 +1,6 @@
 ## Overview
 
-Server Scan is a Minecraft mod that runs network scans to find online IP addresses. The scanner will find servers and save that as a JSON file. There is a built-in explorer for past scans and an additional explorer to quickly add discovered servers to your Minecraft server list. The mod works on Windows and Linux (with the driver/permission notes below).
+Server Scan is a Minecraft mod that runs network scans to find online IP addresses. The scanner will find servers and save that as a JSON file. There is a built-in explorer for past scans and an additional explorer to quickly add discovered servers to your Minecraft server list. The mod works on Windows and Linux.
 
 ## Usage
 
@@ -13,8 +13,37 @@ Server Scan is a Minecraft mod that runs network scans to find online IP address
   
 ### Dependencies
 
-- On Windows, install [Npcap](https://npcap.com/#download) (over the deprecated WinPcap)
-- On Linux, install masscan via your package manager and grant raw network capabilities
+#### Windows
+
+Download the masscan executable from a reputable source or compile it yourself:
+
+- Windows builds: [https://github.com/Arryboom/MasscanForWindows](https://github.com/Arryboom/MasscanForWindows)
+- Official source: [https://github.com/robertdavidgraham/masscan](https://github.com/robertdavidgraham/masscan)
+
+Install Npcap (recommended over the deprecated WinPcap):
+
+- Npcap: [https://npcap.com/#download](https://npcap.com/#download)
+
+Launch the game once. Server Scan will automatically create the configuration file at:
+
+```bat
+%APPDATA%\.minecraft\serverscan\config\masscan.conf
+:: or replace %APPDATA%\.minecraft with your Minecraft directory if necessary
+```
+
+Open ```masscan.conf``` and set the path to your executable installation.
+
+Example:
+
+```bat
+masscan.path=C:\\Users\\reallycoolperson\\Downloads\\masscan64.exe
+```
+
+Save the file and restart Minecraft if it is already running.
+
+#### Linux
+
+Install masscan using your distribution's package manager.
 
 ```bash
 # Debian-based
@@ -25,26 +54,34 @@ dnf install masscan
 
 # Arch Linux-based
 pacman -S masscan
+```
 
-# install to /usr/bin/masscan or /usr/local/bin/masscan
+Grant the required raw socket capability permissions:
 
-# Give permissions to masscan
+```bash
 setcap cap_net_raw=ep $(which masscan)
 ```
 
-If you want to remove permissions to masscan
+Server Scan will automatically detect installations located in standard locations such as:
+- ```/usr/bin/masscan```
+- ```/usr/local/bin/masscan```
+
+If automatic detection does not work, launch the game once and edit the configuration file manually with the exeuctable location:
 
 ```bash
-setcap -r $(which masscan)
+<minecraft directory>/serverscan/config/masscan.conf
 ```
 
-**Note:** If scanning does not happen in the mod due to permission errors, run Minecraft with administrative privileges.
+Example:
 
-On both operating systems, make sure to install Fabric API valid for the Server Scan version. Restart computer if necessary.
+```bat
+masscan.path=/home/reallycoolperson/bin/masscan
+```
+
+**Note:** On both operating systems, make sure to install Fabric API valid for the Server Scan version. A computer restart may be required.
 
 ## Features
 
-- Masscan implementation: Uses the masscan binary (by [https://github.com/robertdavidgraham/masscan](https://github.com/robertdavidgraham/masscan)).
 - High speed scanning: Supports large rates and batch sizes (capable of millions of packets per second). Actual max speeds depends on drive and networks speeds.
 - Chunking & batching: IP ranges are split into queueable chunks. Each chunk is scanned separately and merged for a final output.
 - Pause / Stop handling: Pause waits for the active chunk to finish and merges progress. Stop attempts graceful shutdown and force kills if needed.
