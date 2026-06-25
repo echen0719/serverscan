@@ -82,7 +82,7 @@ public class nativeUtil {
         return null;
     }
 
-    private static void writeConfig(File serverscanFolder, String masscanPath) throws IOException {
+    public static void writeConfig(File serverscanFolder, String masscanPath) throws IOException {
         File configFile = new File(serverscanFolder, configFilePath);
         File configDir = configFile.getParentFile();
 
@@ -103,7 +103,7 @@ public class nativeUtil {
         }
     }
 
-    private static File readConfig(File serverscanFolder) throws IOException {
+    public static File readConfig(File serverscanFolder) throws IOException {
         File configFile = new File(serverscanFolder, configFilePath);
 
         if (!configFile.exists()) {
