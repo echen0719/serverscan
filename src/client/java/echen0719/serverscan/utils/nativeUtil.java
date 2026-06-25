@@ -4,16 +4,19 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Properties;
 
 import echen0719.serverscan.scanExecutor;
 
 public class nativeUtil {
     private static File executable;
+    private static final String configFilePath = "config/masscan.conf";
 
     public static File getBinary(File gameDir) throws IOException {
         // check if masscan executable is already unpacked
-        if (executable != null && executable.exists()) {
+        if (executable != null && executable.exists() && executable.canExecute()) {
             return executable;
         }
 
@@ -23,36 +26,45 @@ public class nativeUtil {
             folder.mkdirs();
         }
 
-        String binName;
+        File configFile = new File(folder, configFilePath);
         String osName = System.getProperty("os.name");
 
         if (osName.toLowerCase().contains("win")) {
-            binName = "masscan.exe";
+            if (!configFile.exists() || !hasValidPath(configFile)) {
+                writeConfig(folder, null);
+            }
+            else {
+                scanExecutor.addLog("Using existing masscan configuration from: " + configFile.getAbsolutePath());
+            }
+
+            executable = readConfig(folder);
         }
         else if (osName.toLowerCase().contains("linux")) {
-            binName = "masscan";
-
             File foundExecutable = findMasscan();
+
             if (foundExecutable != null) {
+                if (!configFile.exists() || !hasValidPath(configFile)) {
+                    writeConfig(folder, foundExecutable.getAbsolutePath());
+                }
+
                 System.out.println("Using installed masscan: " + foundExecutable.getAbsolutePath());
                 scanExecutor.addLog("Using installed masscan: " + foundExecutable.getAbsolutePath());
+                
                 executable = foundExecutable;
                 return executable;
             }
+            
+            if (!configFile.exists() || !hasValidPath(configFile)) {
+                writeConfig(folder, null);
+            }
+            else {
+                scanExecutor.addLog("Using existing masscan configuration from: " + configFile.getAbsolutePath());
+            }
+
+            executable = readConfig(folder);
         }
         else { // only support for Windows and Linux, nothing else now
             throw new UnsupportedOperationException("Unsupported OS: " + osName);
-        }
-
-        executable = new File(folder, binName);
-
-        if (!executable.exists()) {
-            // gets the bin at the resource folder and then open a stream to it (i think?)
-            try (InputStream input = nativeUtil.class.getClassLoader().getResourceAsStream("native/" + binName)) {
-                if (input == null) throw new IOException("Could not find masscan binary in resources");
-                Files.copy(input, executable.toPath(), StandardCopyOption.REPLACE_EXISTING); // copies bin to folder
-            }
-            executable.setExecutable(true); // so JAR can execute it
         }
 
         return executable;
@@ -67,39 +79,85 @@ public class nativeUtil {
             }
         }
 
-        String home = System.getProperty("user.home");
-        if (home != null) {
-            File homeDir = new File(home);
-            File found = searchHomeForMasscan(homeDir, "masscan", 3); // depth 3 for performance
-            if (found != null) {
-                return found;
-            }
-        }
-
         return null;
     }
 
-    private static File searchHomeForMasscan(File dir, String name, int depth) {
-        File[] files = dir.listFiles();
-        if (files == null) {
-            return null;
+    private static void writeConfig(File serverscanFolder, String masscanPath) throws IOException {
+        File configFile = new File(serverscanFolder, configFilePath);
+        File configDir = configFile.getParentFile();
+
+        if (!configDir.exists()) {
+            configDir.mkdirs();
         }
 
-        for (File file : files) {
-            if (file.isFile() && file.getName().equals(name) && file.canExecute()) {
-                return file;
+        Properties props = new Properties();
+        if (masscanPath != null) {
+            props.setProperty("masscan.path", masscanPath);
+        }
+        else {
+            props.setProperty("masscan.path", "");
+        }
+
+        try (var out = Files.newOutputStream(configFile.toPath())) {
+            props.store(out, "ServerScan Masscan File Config");
+        }
+    }
+
+    private static File readConfig(File serverscanFolder) throws IOException {
+        File configFile = new File(serverscanFolder, configFilePath);
+
+        if (!configFile.exists()) {
+            scanExecutor.addLog("Missing config file: " + configFile.getAbsolutePath());
+            throw new IOException(
+                "Missing config file: " + configFile.getAbsolutePath() +
+                "\nCreate it and set masscan.path=<path to masscan binary/executable>"
+            );
+        }
+
+        Properties props = new Properties();
+
+        try (var in = Files.newInputStream(configFile.toPath())) {
+            props.load(in);
+        }
+
+        String path = props.getProperty("masscan.path");
+
+        if (path == null || path.isBlank()) {
+            scanExecutor.addLog("masscan.path is not configured in " + configFile.getAbsolutePath());
+            throw new IOException("masscan.path is not configured in " + configFile.getAbsolutePath());
+        }
+
+        File executable = new File(path);
+
+        if (!executable.isFile() || !executable.canExecute()) {
+            scanExecutor.addLog("Configured masscan executable is invalid: " + path);
+            throw new IOException("Configured masscan executable is invalid: " + path);
+        }
+
+        return executable;
+    }
+
+    private static boolean hasValidPath(File configFile) {
+        if (!configFile.exists()) {
+            return false;
+        }
+        
+        try {
+            Properties props = new Properties();
+            try (var in = Files.newInputStream(configFile.toPath())) {
+                props.load(in);
             }
-        }
 
-        for (File file : files) {
-            if (file.isDirectory()) { // some random ahh recursion
-                File found = searchHomeForMasscan(file, name, depth - 1);
-                if (found != null) {
-                    return found;
-                }
+            String path = props.getProperty("masscan.path");
+            if (path == null || path.isBlank()) {
+                return false;
             }
-        }
 
-        return null;
+            File executable = new File(path);
+            return executable.isFile() && executable.canExecute();
+        } 
+        catch (IOException e) {
+            return false;
+        }
     }
 }
