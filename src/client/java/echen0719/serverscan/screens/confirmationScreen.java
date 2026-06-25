@@ -58,7 +58,7 @@ public class confirmationScreen extends Screen {
         this.addRenderableWidget(renameInputBox);
 
         cancelButton = guiUtils.createButton(this, "Cancel", centerX - totalWidth / 2, centerY + padding, buttonWidth, widgetHeight, button -> {
-            this.minecraft.setScreen(parent);
+            this.minecraft.setScreenAndShow(parent);
         });
         this.addRenderableWidget(cancelButton);
 
@@ -77,7 +77,7 @@ public class confirmationScreen extends Screen {
                 }
             }
             
-            this.minecraft.setScreen(parent);
+            this.minecraft.setScreenAndShow(parent);
         });
         this.addRenderableWidget(confirmButton);
     }
@@ -89,7 +89,7 @@ public class confirmationScreen extends Screen {
         int totalWidth = buttonWidth * 2 + padding;
 
         cancelButton = guiUtils.createButton(this, "Cancel", centerX - totalWidth / 2, centerY, buttonWidth, widgetHeight, button -> {
-            this.minecraft.setScreen(parent);
+            this.minecraft.setScreenAndShow(parent);
         });
         this.addRenderableWidget(cancelButton);
 
@@ -102,7 +102,7 @@ public class confirmationScreen extends Screen {
                 }
             }
 
-            this.minecraft.setScreen(parent);
+            this.minecraft.setScreenAndShow(parent);
         });
         this.addRenderableWidget(confirmButton);
     }

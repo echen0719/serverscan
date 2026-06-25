@@ -176,13 +176,13 @@ public class scanScreen extends Screen {
 				ServerscanClient.logsScreen = new pastScansScreen(this);
 			}
 
-			this.minecraft.setScreen(ServerscanClient.logsScreen);
+			this.minecraft.setScreenAndShow(ServerscanClient.logsScreen);
         });
         this.addRenderableWidget(logsButton);
 
         backButton = guiUtils.createButton(this, "Back", logsButton.getX() + logsButton.getWidth() + padding, buttonY, backWidth, widgetHeight,
         button -> {
-            this.minecraft.setScreen(parent);
+            this.minecraft.setScreenAndShow(parent);
         });
         this.addRenderableWidget(backButton);
     }

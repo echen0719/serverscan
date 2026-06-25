@@ -32,7 +32,7 @@ public class multiplayerScreenMixin extends Screen {
 				ServerscanClient.mainScreen = new scanScreen(this);
 			}
 
-			this.minecraft.setScreen(ServerscanClient.mainScreen);
+			this.minecraft.setScreenAndShow(ServerscanClient.mainScreen);
         }).bounds(x, y, buttonWidth, buttonHeight).build();
 		this.addRenderableWidget(openButton);
 	}

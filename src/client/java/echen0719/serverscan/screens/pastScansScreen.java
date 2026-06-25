@@ -98,7 +98,7 @@ public class pastScansScreen extends Screen {
 
         backButton = guiUtils.createButton(this, "Back", guiStartX + widthForWidgets - backButtonWidth, buttonY, backButtonWidth, widgetHeight,
         button -> {
-            this.minecraft.setScreen(parent);
+            this.minecraft.setScreenAndShow(parent);
         });
         this.addRenderableWidget(backButton);
     }
