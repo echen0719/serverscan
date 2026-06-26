@@ -21,4 +21,4 @@ for branch in "${branches[@]}"; do
   echo -e "Complete\n"
 done
 
-echo "Done""
+echo "Done"
