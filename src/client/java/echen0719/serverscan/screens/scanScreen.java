@@ -72,7 +72,7 @@ public class scanScreen extends Screen {
 
     private void setInputState(EditBox box, boolean active) {
         box.active = active;
-        if (active) {
+        if (active && !box.getValue().isEmpty()) {
             box.setTextColor(white);
         }
         else {
