@@ -63,7 +63,7 @@ public class pastScansScreen extends Screen {
         tableWidth = widthForWidgets;
         tableHeight = this.height - tableY - pxH(0.15f);
 
-        searchBox = guiUtils.createInputBox(this, guiStartX, guiStartY, searchBoxWidth, widgetHeight, "Input file name...");
+        searchBox = guiUtils.createInputBox(guiStartX, guiStartY, searchBoxWidth, widgetHeight, "Input file name...");
         this.addRenderableWidget(searchBox);
 
         searchSubmitButton = guiUtils.createButton(this, "Search", searchBox.getX() + searchBox.getWidth() + padding, guiStartY, searchSubmitButtonWidth, widgetHeight,
@@ -161,8 +161,23 @@ public class pastScansScreen extends Screen {
         ScreenMouseEvents.afterMouseRelease(this).register((ScreenMouseEvents.AfterMouseRelease) this::onMouseRelease);
     }
 
+    private void drawScreenBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        if (this.minecraft.level == null) {
+            this.renderPanorama(context, delta);
+        }
+
+        // this.renderBlurredBackground();
+        this.renderMenuBackground(context);
+    }
+
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {    
+    public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        // take away renderBackground
+    }
+
+    @Override
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        drawScreenBackground(context, mouseX, mouseY, delta);
         renderTable(context, mouseX, mouseY);
         explorer.handleMouseDrag(mouseY);
 

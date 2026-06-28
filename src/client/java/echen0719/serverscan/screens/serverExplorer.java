@@ -254,13 +254,13 @@ public class serverExplorer {
             context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
             // ip address
-            context.drawCenteredString(parent.getFont(), entry.ip, currentX + ipColWidth / 2, rowY + 5, white);
+            context.drawCenteredString(Minecraft.getInstance().font, entry.ip, currentX + ipColWidth / 2, rowY + 5, white);
 
             currentX += ipColWidth;
             context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
 
             // port
-            context.drawCenteredString(parent.getFont(), String.valueOf(entry.port), currentX + portColWidth / 2, rowY + 5, white);
+            context.drawCenteredString(Minecraft.getInstance().font, String.valueOf(entry.port), currentX + portColWidth / 2, rowY + 5, white);
 
             currentX += portColWidth;
             context.fill(currentX, rowY, currentX + 1, rowY + rowHeight, gray);
