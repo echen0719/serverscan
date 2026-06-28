@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "serverscan",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"name": "Server Scan",
 	"description": "Scans many IP addresses to find online servers",
 	"authors": [
@@ -30,9 +30,9 @@
 		}
 	],
 	"depends": {
-		"fabricloader": ">=0.18.4",
-		"minecraft": ">=1.21.6 <=1.21.8",
-		"java": ">=21",
+		"fabricloader": ">=0.19.3",
+		"minecraft": ">=26.1 <=26.1.2",
+		"java": ">=25",
 		"fabric-api": "*"
 	}
 }
