@@ -162,6 +162,16 @@ public class pastScansScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        if (this.minecraft.level == null) {
+            this.renderPanorama(context, delta);
+        }
+
+        // this.renderBlurredBackground();
+        this.renderMenuBackground(context);
+    }
+
+    @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {    
         renderTable(context, mouseX, mouseY);
         explorer.handleMouseDrag(mouseY);
