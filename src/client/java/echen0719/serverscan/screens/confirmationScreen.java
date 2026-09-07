@@ -54,7 +54,7 @@ public class confirmationScreen extends Screen {
         int buttonWidth = 100;
         int totalWidth = buttonWidth * 2 + padding;
 
-        renameInputBox = guiUtils.createInputBox(this, centerX - totalWidth / 2, centerY - padding, totalWidth, widgetHeight, "Enter a new file name...");
+        renameInputBox = guiUtils.createInputBox(centerX - totalWidth / 2, centerY - padding, totalWidth, widgetHeight, "Enter a new file name...");
         this.addRenderableWidget(renameInputBox);
 
         cancelButton = guiUtils.createButton(this, "Cancel", centerX - totalWidth / 2, centerY + padding, buttonWidth, widgetHeight, button -> {
