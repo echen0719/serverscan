@@ -4,7 +4,7 @@ import java.io.File;
 
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -58,7 +58,7 @@ public class confirmationScreen extends Screen {
         this.addRenderableWidget(renameInputBox);
 
         cancelButton = guiUtils.createButton(this, "Cancel", centerX - totalWidth / 2, centerY + padding, buttonWidth, widgetHeight, button -> {
-            this.minecraft.setScreen(parent);
+            this.minecraft.setScreenAndShow(parent);
         });
         this.addRenderableWidget(cancelButton);
 
@@ -77,7 +77,7 @@ public class confirmationScreen extends Screen {
                 }
             }
             
-            this.minecraft.setScreen(parent);
+            this.minecraft.setScreenAndShow(parent);
         });
         this.addRenderableWidget(confirmButton);
     }
@@ -89,7 +89,7 @@ public class confirmationScreen extends Screen {
         int totalWidth = buttonWidth * 2 + padding;
 
         cancelButton = guiUtils.createButton(this, "Cancel", centerX - totalWidth / 2, centerY, buttonWidth, widgetHeight, button -> {
-            this.minecraft.setScreen(parent);
+            this.minecraft.setScreenAndShow(parent);
         });
         this.addRenderableWidget(cancelButton);
 
@@ -102,7 +102,7 @@ public class confirmationScreen extends Screen {
                 }
             }
 
-            this.minecraft.setScreen(parent);
+            this.minecraft.setScreenAndShow(parent);
         });
         this.addRenderableWidget(confirmButton);
     }
@@ -120,14 +120,14 @@ public class confirmationScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) { 
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) { 
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         if (type.equals("RENAME")) {
-            context.drawString(this.font, Component.literal(message), renameInputBox.getX(), renameInputBox.getY() - padding, white);
+            context.text(this.font, Component.literal(message), renameInputBox.getX(), renameInputBox.getY() - padding, white);
         }
         else if (type.equals("DELETE")) {
-            context.drawString(this.font, Component.literal(message), cancelButton.getX(), cancelButton.getY() - padding, white);
+            context.text(this.font, Component.literal(message), cancelButton.getX(), cancelButton.getY() - padding, white);
         }
     }
 }
