@@ -40,6 +40,12 @@ public class nativeUtil {
             executable = readConfig(folder);
         }
         else if (osName.toLowerCase().contains("linux")) {
+            if (configFile.exists()) {
+                scanExecutor.addLog("Using existing masscan configuration from: " + configFile.getAbsolutePath());
+                executable = readConfig(folder);
+                return executable;
+            }
+
             File foundExecutable = findMasscan();
 
             if (foundExecutable != null) {
@@ -85,6 +91,10 @@ public class nativeUtil {
     public static void writeConfig(File serverscanFolder, String masscanPath) throws IOException {
         File configFile = new File(serverscanFolder, configFilePath);
         File configDir = configFile.getParentFile();
+
+        if (configFile.exists()) {
+            return;
+        }
 
         if (!configDir.exists()) {
             configDir.mkdirs();
