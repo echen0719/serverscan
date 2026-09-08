@@ -23,6 +23,7 @@ Download the masscan executable from a reputable source or compile it yourself:
 Install Npcap (recommended over the deprecated WinPcap):
 
 - Npcap: [https://npcap.com/#download](https://npcap.com/#download)
+- Make sure you install with access to raw 802.1x packets
 
 Launch the game once. Server Scan will automatically create the configuration file at:
 
@@ -66,7 +67,7 @@ Server Scan will automatically detect installations located in standard location
 - ```/usr/bin/masscan```
 - ```/usr/local/bin/masscan```
 
-If automatic detection does not work, launch the game once and edit the configuration file manually with the exeuctable location:
+If automatic detection does not work, launch the game once and edit the configuration file manually with the executable location:
 
 ```bash
 <minecraft directory>/serverscan/config/masscan.conf
@@ -78,7 +79,7 @@ Example:
 masscan.path=/home/reallycoolperson/bin/masscan
 ```
 
-**Note:** On both operating systems, make sure to install Fabric API valid for the Server Scan version. A computer restart may be required.
+**Note:** On both operating systems, make sure to install Fabric API valid for the Server Scan version. A computer restart may be required for installations.
 
 ## Features
 
