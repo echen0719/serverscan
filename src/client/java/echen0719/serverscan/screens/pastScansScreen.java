@@ -2,10 +2,13 @@ package echen0719.serverscan.screens;
 
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents; // fabric scroll
 import net.fabricmc.loader.api.FabricLoader;
@@ -96,12 +99,12 @@ public class pastScansScreen extends Screen {
 
         backButton = guiUtils.createButton(this, "Back", guiStartX + widthForWidgets - backButtonWidth, buttonY, backButtonWidth, widgetHeight,
         button -> {
-            this.minecraft.setScreen(parent);
+            Minecraft.getInstance().setScreenAndShow(parent);
         });
         this.addRenderableWidget(backButton);
     }
 
-    private void renderTable(GuiGraphics context, double mouseX, double mouseY) {
+    private void renderTable(GuiGraphicsExtractor context, double mouseX, double mouseY) {
         explorer.setContext(context);
         explorer.createBackground();
         explorer.renderFileTable(mouseX, mouseY);
@@ -116,29 +119,34 @@ public class pastScansScreen extends Screen {
     }
 
     @Override // really have to read mappings
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
         if (searchBox.isFocused() && (keyCode == GLFW.GLFW_KEY_ENTER)) {
             String searchTerm = searchBox.getValue().trim();
             explorer.setSearchTerm(searchTerm);
             return true; // takes in enter key for search box
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
-    private void onMouseScroll(Screen screen, double mouseX, double mouseY, double deltaX, double deltaY) {
+    private boolean onMouseScroll(Screen screen, double mouseX, double mouseY, double deltaX, double deltaY, boolean consumed) {
         explorer.handleScroll(mouseX, mouseY, deltaY);
+        return true;
     }
 
-    private void onMouseClick(Screen screen, double mouseX, double mouseY, int button) {
-        if (button == 0) {
-            explorer.handleMouseClick(mouseX, mouseY);
+    // Minecraft's MouseButtonEvent
+    private boolean onMouseClick(Screen screen, MouseButtonEvent event, boolean consumed) {
+        if (event.button() == 0) {
+            return explorer.handleMouseClick(event.x(), event.y()) || consumed; // if else one-liner
         }
+        return consumed;
     }
 
-    private void onMouseRelease(Screen screen, double mouseX, double mouseY, int button) {
-        if (button == 0) {
+    private boolean onMouseRelease(Screen screen, MouseButtonEvent event, boolean consumed) {
+        if (event.button() == 0) {
             explorer.handleMouseRelease();
         }
+        return consumed;
     }
 
     @Override
@@ -162,10 +170,10 @@ public class pastScansScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {    
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {    
         renderTable(context, mouseX, mouseY);
         explorer.handleMouseDrag(mouseY);
 
-        super.render(context, mouseX, mouseY, delta);
+        super.extractRenderState(context, mouseX, mouseY, delta);
     }
 }

@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
@@ -32,7 +33,7 @@ public class multiplayerScreenMixin extends Screen {
 				ServerscanClient.mainScreen = new scanScreen(this);
 			}
 
-			this.minecraft.setScreen(ServerscanClient.mainScreen);
+			Minecraft.getInstance().setScreenAndShow(ServerscanClient.mainScreen);
         }).bounds(x, y, buttonWidth, buttonHeight).build();
 		this.addRenderableWidget(openButton);
 	}
